@@ -1,156 +1,298 @@
-# Eyenga - Educational Website Project
+# Executive Service Business - Multi-Site React Applications
 
-> A modern React-based educational website focused on sustainable agriculture, livestock, and construction practices.
+> Un workspace moderno con múltiples aplicaciones React: **Corporativa** y **Eyenga**, con despliegue automatizado en Oracle Cloud Free Tier.
 
-## 🌱 Project Overview
+## 🌱 Descripción- VM.Standard.A1.Flex (ARM) (Always Free)
 
-Eyenga is an interactive educational platform that showcases modern digital solutions across multiple sectors including sustainable agriculture, responsible livestock management, and green construction practices. Built with React 18 and TypeScript, the platform emphasizes clean design, accessibility, and mobile-first responsiveness.
+- 4 OCPU ARM + 24GB RAM (Always Free)
+- 150GB Boot Volume (Always Free)
+- VCN + Public Subnet (Always Free) Proyecto
 
-## 🎯 Core Features
+Este proyecto contiene dos aplicaciones React independientes:
 
-- **Multi-sector Educational Content**: Agriculture, livestock, and construction modules
-- **Interactive Design**: Engaging user interface with smooth animations
-- **Responsive Layout**: Mobile-first design optimized for all devices
-- **Modern Architecture**: React 18 with TypeScript for type safety
-- **Performance Optimized**: Fast loading and efficient resource management
+- **Corporativa**: Sitio web corporativo de Executive Service Business
+- **Eyenga**: Plataforma educativa enfocada en agricultura sostenible, ganadería y construcción
 
-## 🏗️ Project Structure
+Ambas aplicaciones están optimizadas para despliegue en **Oracle Cloud Infrastructure (OCI) Free Tier** con **costo $0.00/mes**.
+
+## �️ Estructura del Proyecto
 
 ```
-apps/
-├── eyenga/          # Main educational website application
-│   ├── src/         # Source code
-│   ├── public/      # Static assets
-│   └── package.json # Project dependencies
-├── corporativa/     # Corporate site (not developed)
-└── ...
+executiveservicebusiness-web/
+├── apps/
+│   ├── corporativa/          # Aplicación corporativa
+│   │   ├── src/             # Código fuente React
+│   │   ├── public/          # Assets estáticos
+│   │   └── package.json     # Dependencias específicas
+│   └── eyenga/              # Aplicación educativa
+│       ├── src/             # Código fuente React
+│       ├── public/          # Assets estáticos
+│       └── package.json     # Dependencias específicas
+├── terraform/               # 🆕 Infraestructura como código
+│   ├── main.tf             # Configuración principal de OCI
+│   ├── variables.tf        # Variables de configuración
+│   ├── outputs.tf          # Outputs del despliegue
+│   ├── cloud-init.yaml     # Script de configuración automática
+│   └── README_FREE_TIER.md # Guía completa de despliegue
+├── shared/                  # Configuración compartida
+└── config/                  # Configuración de dominios
 ```
 
-## 🚀 Getting Started
+## 🚀 Inicio Rápido
 
-### Prerequisites
-
-- Node.js 16+
-- npm or yarn
-- Git
-
-### Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/executiveservicebusiness/executiveservicebusiness-web.git
-   cd executiveservicebusiness-web
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Start development server**
-
-   ```bash
-   npm run start:eyenga
-   ```
-
-4. **Access the application**
-   Open http://localhost:3000 in your browser
-
-### Quick Commands
+### Desarrollo Local
 
 ```bash
-# Development
-npm run start:eyenga       # Start Eyenga development server
-npm run build:eyenga       # Build Eyenga for production
-npm run test:eyenga        # Run Eyenga tests
+# Clonar el repositorio
+git clone https://github.com/CSalamanca/executiveservicebusiness-web.git
+cd executiveservicebusiness-web
 
-# Workspace management
-npm run setup              # Setup development environment
-npm run clean              # Clean all build artifacts
+# Instalar dependencias
+npm run install:all
+
+# Desarrollo - ejecutar ambas apps
+npm run dev:all
+
+# O ejecutar individualmente
+npm run dev:corporativa    # http://localhost:3000
+npm run dev:eyenga        # http://localhost:3001
 ```
 
-## 🛠️ Technology Stack
+### Despliegue en Oracle Cloud FREE TIER 🆓
 
-- **Frontend**: React 18, TypeScript
-- **Styling**: CSS3, Responsive Design
-- **Build Tool**: Create React App
-- **Development**: ESLint, DevContainer support
-- **Version Control**: Git with GitHub
+**¡Completamente GRATUITO - $0.00/mes!**
 
-## 📱 Features & Modules
+```bash
+# 1. Ir al directorio de infraestructura
+cd terraform/
 
-### Educational Sections
+# 2. Configurar credenciales (ver guía completa)
+cp terraform.tfvars.example terraform.tfvars
+# Editar terraform.tfvars con tus datos
 
-- **Sustainable Agriculture**: Modern farming techniques and practices
-- **Livestock Management**: Responsible animal husbandry
-- **Green Construction**: Eco-friendly building methods
+# 3. Desplegar infraestructura
+terraform init
+terraform plan
+terraform apply
 
-### Technical Features
+# 4. Acceder a las aplicaciones
+# http://TU_IP_PUBLICA/corporativa
+# http://TU_IP_PUBLICA/eyenga
+```
 
-- **Responsive Design**: Optimized for mobile, tablet, and desktop
-- **Interactive Elements**: Engaging user experience components
-- **Performance**: Fast loading with optimized assets
-- **Accessibility**: WCAG compliant design patterns
+**📖 [Guía Completa de Despliegue en Oracle Cloud](terraform/README_FREE_TIER.md)**
 
-## 🌍 Domain Configuration
+## 🎯 Características Principales
 
-The project supports multiple domain configurations:
+### Aplicaciones React
 
-- **Primary**: eyenga.com
-- **Development**: localhost:3000
-- **Staging**: [configured as needed]
+- **Aplicación Corporativa**: Sitio web empresarial moderno
+- **Aplicación Eyenga**: Plataforma educativa interactiva
+- **Arquitectura Multi-Site**: Gestión independiente de aplicaciones
+- **Responsive Design**: Optimizado para móviles, tablets y desktop
 
-## 📋 Development Workflow
+### Infraestructura Cloud (FREE TIER)
 
-1. **Feature Development**
+- **Oracle Cloud Infrastructure**: VM ARM con 4 OCPU, 24GB RAM
+- **Costo**: $0.00 USD/mes (Always Free)
+- **Despliegue Automatizado**: Terraform + Cloud-init
+- **SSL/HTTPS**: Let's Encrypt automático
+- **Firewall**: Configuración de seguridad incluida
 
-   ```bash
-   git checkout -b feature/new-feature
-   npm run start:eyenga
-   # Develop and test changes
-   ```
+## 🛠️ Stack Tecnológico
 
-2. **Code Quality**
+### Frontend
 
-   ```bash
-   npm run test:eyenga
-   npm run lint
-   ```
+- **React 18** con TypeScript
+- **CSS3** con diseño responsive
+- **Create React App** para build y desarrollo
+- **ESLint** para calidad de código
 
-3. **Deployment**
-   ```bash
-   npm run build:eyenga
-   # Deploy build artifacts
-   ```
+### Infraestructura
 
-## 📖 Documentation
+- **Oracle Cloud Infrastructure (OCI)**
+- **Terraform** para Infrastructure as Code
+- **Ubuntu 22.04 LTS ARM**
+- **Nginx** como servidor web
+- **Let's Encrypt** para SSL gratuito
 
-- **[Technical Documentation](TECHNICAL_DOCS.md)**: Architecture and implementation details
-- **[Commands Reference](COMMANDS.md)**: Available npm scripts and usage
-- **[Deployment Guide](DEPLOYMENT.md)**: Production deployment instructions
-- **[Design Guide](docs/DESIGN_GUIDE.md)**: UI/UX design principles
-- **[Changelog](CHANGELOG.md)**: Version history and updates
+### DevOps
 
-## 🤝 Contributing
+- **GitHub Actions** (configuración pendiente)
+- **Docker** support (desarrollo futuro)
+- **Cloud-init** para configuración automática
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## 📋 Comandos Disponibles
 
-## 📄 License
+### Desarrollo Local
 
-This project is part of the Executive Service Business educational initiative.
+```bash
+# Instalar dependencias
+npm run install:all
+npm run install:corporativa
+npm run install:eyenga
 
-## 🔗 Links
+# Desarrollo
+npm run dev:all              # Ambas aplicaciones simultáneamente
+npm run dev:corporativa      # Solo app corporativa (puerto 3000)
+npm run dev:eyenga          # Solo app Eyenga (puerto 3001)
 
-- **Live Site**: [eyenga.com](https://eyenga.com)
-- **Repository**: [GitHub](https://github.com/executiveservicebusiness/executiveservicebusiness-web)
-- **Issues**: [GitHub Issues](https://github.com/executiveservicebusiness/executiveservicebusiness-web/issues)
+# Producción
+npm run build:all           # Compilar ambas aplicaciones
+npm run build:corporativa   # Compilar solo corporativa
+npm run build:eyenga       # Compilar solo Eyenga
+```
+
+### Infraestructura Cloud
+
+```bash
+# Despliegue completo
+cd terraform/
+terraform init              # Inicializar Terraform
+terraform plan             # Ver plan de despliegue
+terraform apply            # Crear infraestructura
+
+# Gestión
+terraform output           # Ver información de despliegue
+terraform destroy         # Eliminar infraestructura
+
+# SSH a la VM
+ssh -i ~/.ssh/oracle_key ubuntu@TU_IP_PUBLICA
+```
+
+## 🌍 Configuración de Dominios
+
+El proyecto soporta múltiples configuraciones de dominio:
+
+```json
+{
+  "sites": {
+    "corporativa": {
+      "local": { "domain": "corporativa.local", "port": 3000 },
+      "production": { "domain": "corporativa.tudominio.com", "port": 443 }
+    },
+    "eyenga": {
+      "local": { "domain": "eyenga.local", "port": 3001 },
+      "production": { "domain": "eyenga.tudominio.com", "port": 443 }
+    }
+  }
+}
+```
+
+## 🚀 Estado del Despliegue Actual
+
+### ✅ Completado
+
+- [x] Infraestructura Oracle Cloud Free Tier
+- [x] VM ARM: 4 OCPU, 24GB RAM, 150GB storage
+- [x] Networking: VCN, Subnet, Security Lists
+- [x] IP Pública: `143.47.38.168`
+- [x] SSH configurado y funcionando
+- [x] Terraform configuración completa
+- [x] Seguridad: .gitignore para archivos sensibles
+
+### 🔄 Pendiente
+
+- [ ] Instalación automática de aplicaciones (cloud-init fix)
+- [ ] Configuración de Nginx
+- [ ] SSL/HTTPS con Let's Encrypt
+- [ ] CI/CD con GitHub Actions
+- [ ] Monitoreo y logs
+
+## 📖 Documentación
+
+### Guías Principales
+
+- **[🚀 Despliegue Oracle Cloud FREE TIER](terraform/README_FREE_TIER.md)**: Guía completa de despliegue
+- **[📋 Comandos Disponibles](COMMANDS.md)**: Referencia de todos los comandos npm
+- **[🔧 Documentación Técnica](TECHNICAL_DOCS.md)**: Arquitectura e implementación
+- **[📦 Guía de Despliegue](DEPLOYMENT.md)**: Instrucciones de producción
+
+### Documentación de Infraestructura
+
+- **[Terraform Configuration](terraform/)**: Infraestructura como código
+- **[Variables de Configuración](terraform/terraform.tfvars.example)**: Plantilla de configuración
+- **[Scripts de Automatización](terraform/cloud-init.yaml)**: Configuración automática de VM
+
+### Documentación de Desarrollo
+
+- **[Guía de Diseño](DESIGN_GUIDE.md)**: Principios de UI/UX
+- **[Changelog](CHANGELOG.md)**: Historial de versiones y cambios
+
+## 💰 Costos de Infraestructura
+
+### Oracle Cloud Free Tier (SIEMPRE GRATIS)
+
+```
+VM ARM (VM.Standard.A1.Flex):     $0.00/mes
+- 4 OCPU ARM Ampere               (Always Free)
+- 24GB RAM                        (Always Free)
+- 50GB Boot Volume                (Always Free)
+
+Red y Conectividad:               $0.00/mes
+- VCN, Subnet, Internet Gateway   (Always Free)
+- IP Pública Reservada            (Always Free)
+- 10TB Transferencia/mes          (Always Free)
+
+TOTAL MENSUAL:                    $0.00 USD
+```
+
+## 🔒 Seguridad
+
+### Configuración de Firewall
+
+- **Puerto 22**: SSH (acceso administrativo)
+- **Puerto 443**: HTTPS (aplicaciones web)
+- **Puertos cerrados**: Todos los demás puertos bloqueados
+
+### Archivos Protegidos (.gitignore)
+
+```
+terraform/terraform.tfstate      # Estado de infraestructura
+terraform/terraform.tfvars       # Variables con datos sensibles
+terraform/.terraform/            # Cache de Terraform
+~/.ssh/oracle_key               # Claves SSH privadas
+```
+
+## 🤝 Contribución
+
+1. **Fork el repositorio**
+2. **Crear rama de feature** (`git checkout -b feature/nueva-caracteristica`)
+3. **Commit cambios** (`git commit -m 'Agregar nueva característica'`)
+4. **Push a la rama** (`git push origin feature/nueva-caracteristica`)
+5. **Crear Pull Request**
+
+### Flujo de Desarrollo
+
+```bash
+# 1. Configurar entorno local
+git clone https://github.com/CSalamanca/executiveservicebusiness-web.git
+cd executiveservicebusiness-web
+npm run install:all
+
+# 2. Desarrollo
+npm run dev:all
+
+# 3. Testing (cuando esté disponible)
+npm run test:all
+
+# 4. Despliegue en staging
+cd terraform/
+terraform apply
+```
+
+## � Soporte y Enlaces
+
+- **🌐 Aplicación Live**: http://143.47.38.168 (IP actual de la VM)
+- **📁 Repositorio**: [GitHub](https://github.com/CSalamanca/executiveservicebusiness-web)
+- **🐛 Issues**: [GitHub Issues](https://github.com/CSalamanca/executiveservicebusiness-web/issues)
+- **💬 Discusiones**: [GitHub Discussions](https://github.com/CSalamanca/executiveservicebusiness-web/discussions)
+
+## 📄 Licencia
+
+Este proyecto es parte de la iniciativa educativa Executive Service Business.
 
 ---
 
-**Built with ❤️ for sustainable education and digital innovation**
+**🎉 ¡Infraestructura completamente GRATUITA en Oracle Cloud!**  
+**💚 Construido con ❤️ para educación sostenible e innovación digital**

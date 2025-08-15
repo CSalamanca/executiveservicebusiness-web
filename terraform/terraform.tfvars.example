@@ -1,0 +1,69 @@
+# terraform.tfvars.example - Plantilla de configuración para FREE TIER
+# INSTRUCCIONES:
+# 1. Copia este archivo como terraform.tfvars
+# 2. Completa los valores necesarios
+# 3. NUNCA subas terraform.tfvars al repositorio (está en .gitignore)
+
+# =============================================================================
+# CONFIGURACIÓN DE ORACLE CLOUD
+# =============================================================================
+# Obtén estos valores de Oracle Cloud Console > Identity > Users > Tu usuario
+tenancy_ocid = "ocid1.tenancy.oc1..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+user_ocid    = "ocid1.user.oc1..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+# Región donde desplegar (donde tengas disponibilidad de Free Tier ARM)
+region = "eu-madrid-1"  # Cambia según tu región preferida
+
+# =============================================================================
+# CONFIGURACIÓN DEL PROYECTO
+# =============================================================================
+# Prefijo para todos los recursos (se usará como ebs-vm, ebs-vcn, etc.)
+project_name = "ebs"
+
+# =============================================================================
+# CONFIGURACIÓN DE LA VM (FREE TIER ARM)
+# =============================================================================
+# NOTA: Esta configuración utiliza el máximo permitido en Free Tier
+instance_shape     = "VM.Standard.A1.Flex"  # NO CAMBIAR - Solo este está en Free Tier
+instance_ocpus     = 4                      # Máximo en Free Tier
+instance_memory_gb = 24                     # Máximo en Free Tier
+boot_volume_size_gb = 100                    # Puedes usar hasta 200GB gratis
+
+# =============================================================================
+# CONFIGURACIÓN DE RED
+# =============================================================================
+hostname_label = "vm-esb"
+
+# =============================================================================
+# DOMINIOS (OPCIONAL)
+# =============================================================================
+# Si tienes dominios propios, configúralos aquí
+# Si no, puedes acceder por IP: http://IP_PUBLICA/corporativa y http://IP_PUBLICA/eyenga
+corporativa_domain = "corporativa.tudominio.com"  # Cambia por tu dominio
+eyenga_domain     = "eyenga.tudominio.com"        # Cambia por tu dominio
+
+# =============================================================================
+# CLAVE SSH (REQUERIDA)
+# =============================================================================
+# INSTRUCCIONES para generar la clave SSH:
+# 1. Ejecuta: ssh-keygen -t rsa -b 4096 -f ~/.ssh/oracle_key
+# 2. Ejecuta: cat ~/.ssh/oracle_key.pub
+# 3. Copia el contenido completo (desde ssh-rsa hasta el final) aquí:
+
+ssh_public_key = "PEGA_AQUI_TU_CLAVE_PUBLICA_SSH"
+
+# =============================================================================
+# EJEMPLO DE CLAVE SSH:
+# ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC... tu-email@ejemplo.com"
+# =============================================================================
+
+# =============================================================================
+# VERIFICACIÓN
+# =============================================================================
+# Antes de ejecutar terraform apply, verifica:
+# ✅ Todos los OCID son válidos
+# ✅ La región está disponible
+# ✅ Tienes permisos de administrador en Oracle Cloud
+# ✅ La clave SSH está generada y configurada
+# ✅ Los dominios (si los usas) están disponibles
+# =============================================================================

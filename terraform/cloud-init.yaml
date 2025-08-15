@@ -1,0 +1,241 @@
+#cloud-config
+# Configuración automática de la VM para las aplicaciones React
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - nginx
+  - nodejs
+  - npm
+  - git
+  - curl
+  - wget
+  - unzip
+  - htop
+  - tree
+  - certbot
+  - python3-certbot-nginx
+
+write_files:
+  # Configuración de Nginx para ambas aplicaciones
+  - path: /etc/nginx/sites-available/webapp
+    content: |
+      server {
+          listen 80;
+          server_name ${corporativa_domain};
+          
+          location / {
+              root /var/www/corporativa;
+              try_files $uri $uri/ /index.html;
+              
+              # Configuración para SPA (Single Page Application)
+              add_header X-Frame-Options "SAMEORIGIN" always;
+              add_header X-XSS-Protection "1; mode=block" always;
+              add_header X-Content-Type-Options "nosniff" always;
+              add_header Referrer-Policy "no-referrer-when-downgrade" always;
+              add_header Content-Security-Policy "default-src * data: 'unsafe-eval' 'unsafe-inline'" always;
+          }
+
+          # Configuración para archivos estáticos
+          location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+              root /var/www/corporativa;
+              expires 1y;
+              add_header Cache-Control "public, immutable";
+          }
+      }
+
+      server {
+          listen 80;
+          server_name ${eyenga_domain};
+          
+          location / {
+              root /var/www/eyenga;
+              try_files $uri $uri/ /index.html;
+              
+              # Configuración para SPA (Single Page Application)
+              add_header X-Frame-Options "SAMEORIGIN" always;
+              add_header X-XSS-Protection "1; mode=block" always;
+              add_header X-Content-Type-Options "nosniff" always;
+              add_header Referrer-Policy "no-referrer-when-downgrade" always;
+              add_header Content-Security-Policy "default-src * data: 'unsafe-eval' 'unsafe-inline'" always;
+          }
+
+          # Configuración para archivos estáticos
+          location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+              root /var/www/eyenga;
+              expires 1y;
+              add_header Cache-Control "public, immutable";
+          }
+      }
+
+      # Configuración para acceso por IP (subdirectorios)
+      server {
+          listen 80 default_server;
+          server_name _;
+          
+          location / {
+              root /var/www/html;
+              index index.html;
+          }
+          
+          location /corporativa {
+              alias /var/www/corporativa;
+              try_files $uri $uri/ /corporativa/index.html;
+          }
+          
+          location /eyenga {
+              alias /var/www/eyenga;
+              try_files $uri $uri/ /eyenga/index.html;
+          }
+      }
+
+  # Script de despliegue
+  - path: /home/ubuntu/deploy.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e
+
+      echo "=== Iniciando despliegue de aplicaciones React ==="
+
+      # Crear directorios
+      sudo mkdir -p /var/www/corporativa
+      sudo mkdir -p /var/www/eyenga
+      sudo mkdir -p /var/www/html
+
+      # Clonar el repositorio
+      cd /home/ubuntu
+      if [ ! -d "executiveservicebusiness-web" ]; then
+          git clone https://github.com/CSalamanca/executiveservicebusiness-web.git
+      else
+          cd executiveservicebusiness-web
+          git pull origin oracle-vm
+          cd ..
+      fi
+
+      cd executiveservicebusiness-web
+
+      # Instalar dependencias y compilar aplicaciones
+      echo "=== Instalando dependencias ==="
+      npm run install:all
+
+      echo "=== Compilando aplicaciones ==="
+      npm run build:all
+
+      # Copiar archivos compilados
+      echo "=== Copiando archivos al servidor web ==="
+      sudo cp -r apps/corporativa/build/* /var/www/corporativa/
+      sudo cp -r apps/eyenga/build/* /var/www/eyenga/
+
+      # Crear página de inicio simple
+      sudo tee /var/www/html/index.html > /dev/null <<EOF
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Executive Service Business</title>
+          <style>
+              body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+              .container { max-width: 600px; margin: 0 auto; }
+              .app-link { display: inline-block; margin: 20px; padding: 20px; background: #f4f4f4; text-decoration: none; color: #333; border-radius: 8px; }
+              .app-link:hover { background: #e4e4e4; }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h1>Executive Service Business</h1>
+              <p>Selecciona una aplicación:</p>
+              <a href="/corporativa" class="app-link">
+                  <h3>Aplicación Corporativa</h3>
+                  <p>Sitio web corporativo</p>
+              </a>
+              <a href="/eyenga" class="app-link">
+                  <h3>Eyenga</h3>
+                  <p>Agricultura sostenible</p>
+              </a>
+          </div>
+      </body>
+      </html>
+      EOF
+
+      # Configurar permisos
+      sudo chown -R www-data:www-data /var/www/
+      sudo chmod -R 755 /var/www/
+
+      # Habilitar sitio
+      sudo ln -sf /etc/nginx/sites-available/webapp /etc/nginx/sites-enabled/
+      sudo rm -f /etc/nginx/sites-enabled/default
+
+      # Reiniciar Nginx
+      sudo systemctl reload nginx
+
+      echo "=== Despliegue completado ==="
+      echo "Aplicaciones disponibles en:"
+      echo "- http://$(curl -s ifconfig.me)/corporativa"
+      echo "- http://$(curl -s ifconfig.me)/eyenga"
+
+  # Script para configurar SSL (Let's Encrypt)
+  - path: /home/ubuntu/setup-ssl.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e
+
+      if [ "$#" -ne 2 ]; then
+          echo "Uso: $0 <dominio_corporativa> <dominio_eyenga>"
+          echo "Ejemplo: $0 corporativa.tudominio.com eyenga.tudominio.com"
+          exit 1
+      fi
+
+      CORP_DOMAIN=$1
+      EYENGA_DOMAIN=$2
+
+      echo "=== Configurando SSL para dominios ==="
+      echo "Corporativa: $CORP_DOMAIN"
+      echo "Eyenga: $EYENGA_DOMAIN"
+
+      # Obtener certificados SSL
+      sudo certbot --nginx -d $CORP_DOMAIN -d $EYENGA_DOMAIN --non-interactive --agree-tos --email admin@$CORP_DOMAIN
+
+      # Configurar renovación automática
+      sudo systemctl enable certbot.timer
+
+      echo "=== SSL configurado correctamente ==="
+
+runcmd:
+  # Actualizar Node.js a la versión LTS más reciente
+  - curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+  - sudo apt-get install -y nodejs
+
+  # Configurar firewall
+  - ufw allow ssh
+  - ufw allow 'Nginx Full'
+  - echo "y" | ufw enable
+
+  # Iniciar y habilitar servicios
+  - systemctl enable nginx
+  - systemctl start nginx
+
+  # Ejecutar script de despliegue
+  - sudo -u ubuntu /home/ubuntu/deploy.sh
+
+  # Configurar logrotate para logs de aplicación
+  - echo '/var/log/webapp/*.log { daily missingok rotate 52 compress delaycompress notifempty create 644 www-data www-data }' > /etc/logrotate.d/webapp
+
+final_message: |
+  ====================================
+  🚀 VM configurada exitosamente! 🚀
+  ====================================
+
+  Las aplicaciones React están desplegadas y funcionando.
+
+  Accede a través de:
+  - Corporativa: http://IP_PUBLICA/corporativa
+  - Eyenga: http://IP_PUBLICA/eyenga
+
+  Para configurar dominios personalizados:
+  1. Apunta tus dominios a la IP pública de esta VM
+  2. Ejecuta: sudo /home/ubuntu/setup-ssl.sh tudominio1.com tudominio2.com
+
+  SSH: ssh ubuntu@IP_PUBLICA
+  ====================================

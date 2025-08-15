@@ -1,309 +1,904 @@
-# 🚀 Guía de Deployment - Proyecto Eyenga
+# 🚀 Guía de Despliegue - Executive Service Business
 
 ## 📋 Información del Proyecto
 
-**Proyecto**: Website Educativo Eyenga  
+**Proyecto**: Executive Service Business Multi-Site  
+**Aplicaciones**: Corporativa + Eyenga  
 **Tecnología**: React 18.x + TypeScript  
-**Estado**: ✅ Listo para Producción  
-**Puerto de desarrollo**: 3001  
-**Dominio objetivo**: www.eyenga-project.org
+**Infraestructura**: Oracle Cloud Infrastructure (OCI) Free Tier  
+**Estado**: ✅ Infraestructura desplegada, aplicaciones pendientes  
+**Costo**: **$0.00 USD/mes** (Always Free)
 
-## 🎯 Preparación para Producción
+## 🎯 Estado Actual del Despliegue
 
-### ✅ Estado Actual del Proyecto
+### ✅ Completado
 
-- ✅ **Funcionalidades completadas**:
+- [x] **Infraestructura Oracle Cloud**
+  - [x] VM ARM: 4 OCPU, 24GB RAM, 150GB storage (Free Tier)
+  - [x] VCN, Subnet, Internet Gateway, Route Table
+  - [x] Security List (Firewall): puertos 22 y 443
+  - [x] IP Pública: `143.47.38.168`
+  - [x] SSH configurado y funcionando
+- [x] **Configuración de Desarrollo**
+  - [x] Oracle CLI configurado
+  - [x] Terraform Infrastructure as Code
+  - [x] Claves SSH generadas
+  - [x] .gitignore para archivos sensibles
 
-  - Diseño moderno con gradientes coloridos
-  - Navegación inteligente con flechas de scroll dual
-  - Modal de contacto funcional
-  - Galería con imágenes auténticas del proyecto
-  - Contenido real del proyecto educativo Eyenga
-  - Responsive design (móvil, tablet, desktop)
-  - Optimización de performance
+### 🔄 Pendiente
 
-- ✅ **Componentes implementados**:
-  - Hero section con logo personalizado
-  - Estadísticas del proyecto (2600 estudiantes, 90% inserción laboral, etc.)
-  - Programas de formación (agricultura, ganadería, construcción)
-  - Galería de campus e instalaciones
-  - Sección "Sobre Eyenga" con misión y visión
-  - Call-to-action con información de inversión
-  - Footer con información de contacto
+- [ ] **Instalación de Aplicaciones**
+  - [ ] Corrección del script cloud-init
+  - [ ] Instalación manual de Node.js, Nginx, Git
+  - [ ] Clonado y build de aplicaciones React
+  - [ ] Configuración de Nginx multi-site
+- [ ] **Configuración SSL**
+  - [ ] Configuración de dominios
+  - [ ] Certificados Let's Encrypt
+  - [ ] HTTPS redirect
 
-### Checklist Pre-Deployment
+## 🏗️ Arquitectura de Despliegue
 
-- [x] **Código funcional**
-
-  - [x] Todas las secciones funcionando
-  - [x] Navegación entre secciones fluida
-  - [x] Modal de contacto operativo
-  - [x] Flechas de scroll con lógica inteligente
-  - [x] Responsive design verificado
-
-- [x] **Assets optimizados**
-
-  - [x] Imágenes específicas del proyecto integradas
-  - [x] Logo personalizado (image010.png) implementado
-  - [x] Imágenes de galería optimizadas
-  - [x] Assets de tamaño apropiado
-
-- [ ] **Configuración de producción**
-  - [ ] Variables de entorno configuradas
-  - [ ] Dominio www.eyenga-project.org configurado
-  - [ ] Certificado SSL obtenido
-  - [ ] Analytics configurado
+```
+┌─────────────────────────────────────────┐
+│        Internet Gateway (FREE)         │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│           VCN 10.0.0.0/16 (FREE)       │
+│  ┌─────────────────────────────────────┐│
+│  │     Subnet 10.0.1.0/24 (FREE)      ││
+│  │  ┌─────────────────────────────────┐││
+│  │  │     VM vm-esb (FREE)            │││
+│  │  │   IP: 143.47.38.168             │││
+│  │  │   VM.Standard.A1.Flex ARM       │││
+│  │  │   4 OCPU, 24GB RAM, 150GB       │││
+│  │  │  ┌─────────────────────────────┐│││
+│  │  │  │         Nginx               ││││
+│  │  │  │ :443 -> corporativa/eyenga  ││││
+│  │  │  └─────────────────────────────┘│││
+│  │  └─────────────────────────────────┘││
+│  └─────────────────────────────────────┘│
+└─────────────────────────────────────────┘
+```
 
 ## ⚙️ Configuración de Entorno
 
-### Variables de Entorno para Producción
+### Variables de Entorno para Oracle Cloud
 
-```env
-# apps/eyenga/.env.production
-REACT_APP_ENVIRONMENT=production
-REACT_APP_DOMAIN=www.eyenga-project.org
-REACT_APP_VERSION=1.0.0
-REACT_APP_CONTACT_EMAIL=info@eyenga-project.org
-REACT_APP_ANALYTICS_ID=UA-XXXXXXXX-1
+```bash
+# Información de la VM actual
+VM_IP=143.47.38.168
+VM_HOSTNAME=vm-esb
+SSH_KEY=~/.ssh/oracle_key
+SSH_USER=ubuntu
 
-# Información del proyecto
-REACT_APP_CAMPUS_CONGO_SIZE=100
-REACT_APP_CAMPUS_MADRID_SIZE=16
-REACT_APP_STUDENTS_PROJECTED=2600
-REACT_APP_EMPLOYMENT_RATE=90
-REACT_APP_INVESTMENT_TOTAL=80000000
+# Oracle Cloud IDs
+TENANCY_OCID=ocid1.tenancy.oc1..aaaaaaaas6unwuf3wsbpw4r4gnldgzliqebbw3sk7ibozkcmwlchksxe3lsa
+USER_OCID=ocid1.user.oc1..aaaaaaaahu4icrylrpamush4g36p6tsvicup5fvgfp2aevc7xol435jm5omq
+REGION=eu-madrid-1
 ```
 
-### Configuración de Dominios
+### Configuración de Dominios (Futuro)
 
 ```json
 {
   "sites": {
-    "eyenga": {
-      "local": {
-        "domain": "eyenga.local",
-        "port": 3001
-      },
-      "staging": {
-        "domain": "staging.eyenga-project.org",
-        "port": 443
-      },
+    "corporativa": {
+      "local": { "domain": "corporativa.local", "port": 3000 },
+      "development": { "domain": "143.47.38.168/corporativa", "port": 443 },
       "production": {
-        "domain": "www.eyenga-project.org",
-        "port": 443,
-        "apiUrl": "https://api.eyenga-project.org"
+        "domain": "corporativa.executiveservice.com",
+        "port": 443
       }
+    },
+    "eyenga": {
+      "local": { "domain": "eyenga.local", "port": 3001 },
+      "development": { "domain": "143.47.38.168/eyenga", "port": 443 },
+      "production": { "domain": "eyenga.executiveservice.com", "port": 443 }
     }
-  },
-  "environment": "production"
+  }
 }
 ```
 
----
+## 🔧 Comandos de Administración
 
-## 🏗️ Proceso de Build
-
-### Build para Producción
+### Acceso a la VM
 
 ```bash
-# Script de build completo
-#!/bin/bash
-echo "🏗️ Iniciando build para producción..."
+# Conectar por SSH
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168
 
-# 1. Limpiar builds anteriores
-rm -rf apps/*/build
+# Verificar estado del sistema
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168 "
+  echo '=== ESTADO DEL SISTEMA ==='
+  uptime
+  df -h
+  free -h
+  systemctl status nginx
+"
 
-# 2. Build de todas las aplicaciones
+# Verificar logs
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168 "
+  sudo tail -f /var/log/cloud-init-output.log
+"
+```
+
+### Terraform - Gestión de Infraestructura
+
+```bash
+# Ver estado actual
+cd terraform/
+terraform output
+
+# Ver información detallada
+terraform show
+
+# Aplicar cambios
+terraform plan
+terraform apply
+
+# Destruir infraestructura (¡CUIDADO!)
+terraform destroy
+```
+
+## 🏗️ Proceso de Build y Despliegue
+
+### Opción 1: Instalación Manual (Recomendado para resolver problemas)
+
+```bash
+# 1. Conectar a la VM
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168
+
+# 2. Actualizar sistema
+sudo apt update && sudo apt upgrade -y
+
+# 3. Instalar Node.js LTS
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 4. Instalar dependencias
+sudo apt install -y nginx git curl wget unzip
+
+# 5. Configurar firewall
+sudo ufw allow ssh
+sudo ufw allow 'Nginx Full'
+sudo ufw --force enable
+
+# 6. Clonar repositorio
+git clone https://github.com/CSalamanca/executiveservicebusiness-web.git
+cd executiveservicebusiness-web
+
+# 7. Instalar y compilar aplicaciones
+npm install
+npm run install:all
 npm run build:all
 
-# 3. Verificar builds exitosos
-if [ -d "apps/corporativa/build" ] && [ -d "apps/eyenga/build" ]; then
-    echo "✅ Build completado exitosamente"
+# 8. Configurar Nginx
+sudo cp terraform/nginx-multisite.conf /etc/nginx/sites-available/webapp
+sudo ln -sf /etc/nginx/sites-available/webapp /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
 
-    # 4. Mostrar tamaños de build
-    du -sh apps/*/build
+# 9. Crear directorios web
+sudo mkdir -p /var/www/corporativa /var/www/eyenga /var/www/html
+
+# 10. Copiar builds
+sudo cp -r apps/corporativa/build/* /var/www/corporativa/
+sudo cp -r apps/eyenga/build/* /var/www/eyenga/
+
+# 11. Configurar permisos
+sudo chown -R www-data:www-data /var/www/
+sudo chmod -R 755 /var/www/
+
+# 12. Reiniciar Nginx
+sudo systemctl restart nginx
+sudo systemctl enable nginx
+```
+
+### Opción 2: Script Automatizado
+
+```bash
+# Crear script de despliegue en la VM
+cat > deploy.sh << 'EOF'
+#!/bin/bash
+set -e
+
+echo "🚀 Iniciando despliegue automatizado..."
+
+# Verificar dependencias
+command -v node >/dev/null 2>&1 || {
+    echo "Installing Node.js..."
+    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+    sudo apt install -y nodejs
+}
+
+command -v nginx >/dev/null 2>&1 || {
+    echo "Installing Nginx..."
+    sudo apt update
+    sudo apt install -y nginx
+}
+
+# Clonar o actualizar repositorio
+if [ -d "executiveservicebusiness-web" ]; then
+    cd executiveservicebusiness-web
+    git pull origin oracle-vm
 else
-    echo "❌ Error en el build"
-    exit 1
+    git clone https://github.com/CSalamanca/executiveservicebusiness-web.git
+    cd executiveservicebusiness-web
 fi
-```
 
-### Optimizaciones de Build
+# Build aplicaciones
+echo "📦 Building applications..."
+npm install
+npm run install:all
+npm run build:all
 
-```json
-{
-  "scripts": {
-    "build:analyze": "npm run build && npx bundle-analyzer apps/corporativa/build/static/js/*.js",
-    "build:optimized": "GENERATE_SOURCEMAP=false npm run build",
-    "build:size-check": "npm run build && node scripts/check-bundle-size.js"
-  }
+# Configurar web server
+echo "🌐 Configuring web server..."
+sudo mkdir -p /var/www/{corporativa,eyenga,html}
+sudo cp -r apps/corporativa/build/* /var/www/corporativa/
+sudo cp -r apps/eyenga/build/* /var/www/eyenga/
+
+# Crear página de índice
+sudo tee /var/www/html/index.html > /dev/null << 'HTML'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Executive Service Business</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .app-link { display: inline-block; margin: 20px; padding: 20px;
+                   background: #f4f4f4; text-decoration: none; color: #333;
+                   border-radius: 8px; transition: background 0.3s; }
+        .app-link:hover { background: #e4e4e4; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Executive Service Business</h1>
+        <p>Selecciona una aplicación:</p>
+        <a href="/corporativa" class="app-link">
+            <h3>Aplicación Corporativa</h3>
+            <p>Sitio web corporativo</p>
+        </a>
+        <a href="/eyenga" class="app-link">
+            <h3>Eyenga</h3>
+            <p>Plataforma educativa</p>
+        </a>
+    </div>
+</body>
+</html>
+HTML
+
+# Configurar Nginx
+sudo tee /etc/nginx/sites-available/webapp > /dev/null << 'NGINX'
+server {
+    listen 80 default_server;
+    server_name _;
+
+    root /var/www/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location /corporativa {
+        alias /var/www/corporativa;
+        try_files $uri $uri/ /corporativa/index.html;
+    }
+
+    location /eyenga {
+        alias /var/www/eyenga;
+        try_files $uri $uri/ /eyenga/index.html;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
 }
+NGINX
+
+# Activar configuración
+sudo ln -sf /etc/nginx/sites-available/webapp /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Configurar permisos
+sudo chown -R www-data:www-data /var/www/
+sudo chmod -R 755 /var/www/
+
+# Reiniciar servicios
+sudo systemctl restart nginx
+sudo systemctl enable nginx
+
+# Configurar firewall
+sudo ufw allow ssh
+sudo ufw allow 'Nginx Full'
+sudo ufw --force enable
+
+echo "✅ Despliegue completado exitosamente!"
+echo "🌐 Aplicaciones disponibles en:"
+echo "   - http://$(curl -s ifconfig.me)/"
+echo "   - http://$(curl -s ifconfig.me)/corporativa"
+echo "   - http://$(curl -s ifconfig.me)/eyenga"
+
+EOF
+
+chmod +x deploy.sh
 ```
 
-### Script de Verificación de Tamaño
+### Ejecutar Despliegue Automatizado
 
-```javascript
-// scripts/check-bundle-size.js
-const fs = require("fs");
-const path = require("path");
-
-const MAX_BUNDLE_SIZE = 2 * 1024 * 1024; // 2MB
-
-const checkBundleSize = (appName) => {
-  const buildDir = path.join(
-    __dirname,
-    "..",
-    "apps",
-    appName,
-    "build",
-    "static",
-    "js"
-  );
-
-  if (!fs.existsSync(buildDir)) {
-    console.error(`❌ Build directory not found for ${appName}`);
-    return false;
-  }
-
-  const files = fs.readdirSync(buildDir);
-  const jsFiles = files.filter(
-    (file) => file.endsWith(".js") && !file.includes(".map")
-  );
-
-  let totalSize = 0;
-  jsFiles.forEach((file) => {
-    const filePath = path.join(buildDir, file);
-    const size = fs.statSync(filePath).size;
-    totalSize += size;
-    console.log(`📦 ${appName}/${file}: ${(size / 1024).toFixed(2)} KB`);
-  });
-
-  console.log(
-    `📊 Total size for ${appName}: ${(totalSize / 1024).toFixed(2)} KB`
-  );
-
-  if (totalSize > MAX_BUNDLE_SIZE) {
-    console.error(
-      `⚠️  ${appName} bundle exceeds ${MAX_BUNDLE_SIZE / 1024 / 1024}MB limit`
-    );
-    return false;
-  }
-
-  return true;
-};
-
-const corporativaOk = checkBundleSize("corporativa");
-const eyengaOk = checkBundleSize("eyenga");
-
-if (!corporativaOk || !eyengaOk) {
-  process.exit(1);
-}
-
-console.log("✅ All bundle sizes are within limits");
+```bash
+# Copiar script a la VM y ejecutar
+scp -i ~/.ssh/oracle_key deploy.sh ubuntu@143.47.38.168:~/
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168 "~/deploy.sh"
 ```
-
----
 
 ## 🌐 Configuración de Dominios
 
-### DNS Configuration
+### Configuración DNS (Para dominios personalizados)
 
 ```bash
-# Registros DNS requeridos
+# Configurar registros DNS apuntando a la IP pública
+IP_PUBLICA=143.47.38.168
+
+# Registros DNS necesarios:
+# Tipo  Nombre              Valor              TTL
+# A     @                   143.47.38.168     300
+# A     www                 143.47.38.168     300
+# A     corporativa         143.47.38.168     300
+# A     eyenga             143.47.38.168     300
 ```
 
-#### Para corporativa.com:
-
-```
-Type    Name                Value               TTL
-A       @                   192.168.1.100      300
-A       www                 192.168.1.100      300
-CNAME   staging            staging-server.com  300
-```
-
-#### Para eyenga.com:
-
-```
-Type    Name                Value               TTL
-A       @                   192.168.1.101      300
-A       www                 192.168.1.101      300
-CNAME   staging            staging-server.com  300
-```
-
-### Certificados SSL
+### Configuración SSL con Let's Encrypt
 
 ```bash
-# Usando Let's Encrypt con certbot
-sudo apt install certbot python3-certbot-nginx
+# 1. Conectar a la VM
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168
 
-# Obtener certificados
-sudo certbot --nginx -d corporativa.com -d www.corporativa.com
-sudo certbot --nginx -d eyenga.com -d www.eyenga.com
+# 2. Instalar Certbot
+sudo apt install -y certbot python3-certbot-nginx
 
-# Verificar auto-renovación
+# 3. Obtener certificados (solo después de configurar DNS)
+sudo certbot --nginx -d corporativa.tudominio.com -d eyenga.tudominio.com
+
+# 4. Verificar auto-renovación
 sudo certbot renew --dry-run
+
+# 5. Configurar renovación automática
+echo "0 12 * * * /usr/bin/certbot renew --quiet" | sudo crontab -
 ```
 
----
-
-## 🔒 Seguridad en Producción
-
-### Content Security Policy (CSP)
-
-```html
-<!-- En public/index.html de cada app -->
-<meta
-  http-equiv="Content-Security-Policy"
-  content="
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' https://www.google-analytics.com;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  font-src 'self' https://fonts.gstatic.com;
-  img-src 'self' data: https:;
-  connect-src 'self' https://api.corporativa.com;
-"
-/>
-```
-
-### Security Headers (Nginx Config)
+### Configuración de Nginx con SSL
 
 ```nginx
-# /etc/nginx/sites-available/corporativa.com
+# /etc/nginx/sites-available/webapp-ssl
+server {
+    listen 80;
+    server_name corporativa.tudominio.com eyenga.tudominio.com 143.47.38.168;
+    return 301 https://$server_name$request_uri;
+}
+
 server {
     listen 443 ssl http2;
-    server_name corporativa.com www.corporativa.com;
+    server_name corporativa.tudominio.com;
 
-    # SSL Configuration
-    ssl_certificate /etc/letsencrypt/live/corporativa.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/corporativa.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/corporativa.tudominio.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/corporativa.tudominio.com/privkey.pem;
+
+    root /var/www/corporativa;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name eyenga.tudominio.com;
+
+    ssl_certificate /etc/letsencrypt/live/eyenga.tudominio.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/eyenga.tudominio.com/privkey.pem;
+
+    root /var/www/eyenga;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+}
+```
+
+## 🔒 Seguridad en Oracle Cloud
+
+### Configuración del Firewall en Oracle Cloud Console
+
+```bash
+# Security List Rules ya configuradas en Terraform:
+# Ingress Rules:
+#   - Puerto 22 (SSH): 0.0.0.0/0
+#   - Puerto 443 (HTTPS): 0.0.0.0/0
+#   - ICMP (Ping): 0.0.0.0/0
+
+# Egress Rules:
+#   - All traffic: 0.0.0.0/0
+```
+
+### Configuración del Firewall del Sistema (UFW)
+
+```bash
+# Conectar a la VM
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168
+
+# Configurar UFW
+sudo ufw --force reset
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# Permitir SSH
+sudo ufw allow ssh
+sudo ufw allow 22
+
+# Permitir HTTP/HTTPS
+sudo ufw allow 'Nginx Full'
+sudo ufw allow 80
+sudo ufw allow 443
+
+# Habilitar firewall
+sudo ufw --force enable
+
+# Verificar estado
+sudo ufw status verbose
+```
+
+### Endurecimiento de SSH
+
+```bash
+# Configuración SSH más segura
+sudo tee -a /etc/ssh/sshd_config << EOF
+
+# Executive Service Business SSH Security
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+X11Forwarding no
+MaxAuthTries 3
+ClientAliveInterval 300
+ClientAliveCountMax 2
+EOF
+
+# Reiniciar SSH
+sudo systemctl restart ssh
+```
+
+## 📊 Monitoreo y Mantenimiento
+
+### Scripts de Monitoreo
+
+```bash
+# Script de estado del sistema
+cat > monitor.sh << 'EOF'
+#!/bin/bash
+
+echo "=== MONITOREO SISTEMA - $(date) ==="
+echo "📊 RECURSOS:"
+echo "CPU: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | awk -F'%' '{print $1}')%"
+echo "RAM: $(free | grep Mem | awk '{printf "%.2f%%", $3/$2 * 100.0}')"
+echo "Disk: $(df -h / | awk 'NR==2{print $5}')"
+
+echo "🌐 SERVICIOS:"
+systemctl is-active nginx && echo "✅ Nginx: Running" || echo "❌ Nginx: Stopped"
+
+echo "🔗 CONECTIVIDAD:"
+curl -s -I http://localhost > /dev/null && echo "✅ HTTP: OK" || echo "❌ HTTP: Error"
+
+echo "📈 LOGS RECIENTES:"
+echo "Nginx errors (last 5):"
+sudo tail -5 /var/log/nginx/error.log 2>/dev/null || echo "No errors"
+
+EOF
+
+chmod +x monitor.sh
+```
+
+### Copiar script a la VM y configurar cron
+
+```bash
+# Copiar script
+scp -i ~/.ssh/oracle_key monitor.sh ubuntu@143.47.38.168:~/
+
+# Configurar ejecución automática
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168 "
+chmod +x ~/monitor.sh
+# Ejecutar cada hora
+(crontab -l 2>/dev/null; echo '0 * * * * ~/monitor.sh >> ~/system-monitor.log') | crontab -
+"
+```
+
+### Backup Automático
+
+```bash
+# Script de backup
+cat > backup.sh << 'EOF'
+#!/bin/bash
+
+BACKUP_DIR="/home/ubuntu/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+
+mkdir -p $BACKUP_DIR
+
+echo "🗄️ Backup iniciado: $DATE"
+
+# Backup de aplicaciones web
+tar -czf "$BACKUP_DIR/web_$DATE.tar.gz" -C /var/www . 2>/dev/null
+
+# Backup de configuración Nginx
+sudo cp /etc/nginx/sites-available/webapp "$BACKUP_DIR/nginx_$DATE.conf"
+
+# Limpiar backups antiguos (mantener solo los últimos 7 días)
+find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
+find $BACKUP_DIR -name "*.conf" -mtime +7 -delete
+
+echo "✅ Backup completado: $BACKUP_DIR/web_$DATE.tar.gz"
+EOF
+
+# Copiar y configurar
+scp -i ~/.ssh/oracle_key backup.sh ubuntu@143.47.38.168:~/
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168 "
+chmod +x ~/backup.sh
+# Backup diario a las 2 AM
+(crontab -l 2>/dev/null; echo '0 2 * * * ~/backup.sh') | crontab -
+```
+
+## 🐛 Troubleshooting y Diagnóstico
+
+### Problemas Comunes y Soluciones
+
+#### 1. Error de conexión SSH
+
+```bash
+# Problema: Permission denied (publickey)
+# Solución:
+ssh-add ~/.ssh/oracle_key
+ssh -i ~/.ssh/oracle_key -v ubuntu@143.47.38.168
+
+# Verificar permisos de la clave
+chmod 600 ~/.ssh/oracle_key
+```
+
+#### 2. Aplicaciones no cargan
+
+```bash
+# Conectar a la VM
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168
+
+# Verificar status de Nginx
+sudo systemctl status nginx
+
+# Revisar logs de Nginx
+sudo tail -f /var/log/nginx/error.log
+sudo tail -f /var/log/nginx/access.log
+
+# Verificar archivos web
+ls -la /var/www/corporativa/
+ls -la /var/www/eyenga/
+
+# Verificar configuración Nginx
+sudo nginx -t
+
+# Recargar configuración
+sudo systemctl reload nginx
+```
+
+#### 3. Error en cloud-init
+
+```bash
+# Revisar logs de cloud-init
+sudo tail -f /var/log/cloud-init-output.log
+sudo cloud-init status
+
+# Re-ejecutar cloud-init si es necesario
+sudo cloud-init clean --logs
+sudo cloud-init init
+```
+
+#### 4. Problemas de firewall
+
+```bash
+# Verificar reglas UFW
+sudo ufw status verbose
+
+# Verificar Security List en Oracle Cloud Console
+# Navegar a: VCN Details > Security Lists > Default Security List
+
+# Verificar conectividad
+curl -I http://143.47.38.168
+telnet 143.47.38.168 443
+```
+
+### Comandos de Diagnóstico
+
+```bash
+# Script de diagnóstico completo
+cat > diagnose.sh << 'EOF'
+#!/bin/bash
+
+echo "🔍 DIAGNÓSTICO COMPLETO - $(date)"
+echo "=================================================="
+
+echo "📋 INFORMACIÓN DEL SISTEMA:"
+echo "OS: $(lsb_release -d | cut -f2)"
+echo "Kernel: $(uname -r)"
+echo "Uptime: $(uptime -p)"
+echo "Load: $(uptime | awk -F'load average:' '{print $2}')"
+
+echo ""
+echo "💾 RECURSOS:"
+echo "CPU Usage: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | awk -F'%' '{print $1}')%"
+echo "Memory:"
+free -h
+
+echo "Disk Usage:"
+df -h
+
+echo ""
+echo "🌐 SERVICIOS:"
+echo "Nginx: $(systemctl is-active nginx)"
+echo "SSH: $(systemctl is-active ssh)"
+
+echo ""
+echo "🔥 FIREWALL:"
+echo "UFW Status:"
+sudo ufw status verbose
+
+echo ""
+echo "📡 CONECTIVIDAD:"
+echo "External IP Check:"
+curl -s ipinfo.io/ip || echo "No external connectivity"
+
+echo "Port Checks:"
+ss -tulpn | grep -E ':(22|80|443|8080)'
+
+echo ""
+echo "📁 ARCHIVOS WEB:"
+echo "Corporativa files:"
+ls -la /var/www/corporativa/ 2>/dev/null | head -5
+
+echo "Eyenga files:"
+ls -la /var/www/eyenga/ 2>/dev/null | head -5
+
+echo ""
+echo "🗃️ LOGS RECIENTES:"
+echo "Nginx Errors (last 3):"
+sudo tail -3 /var/log/nginx/error.log 2>/dev/null || echo "No errors found"
+
+echo "System Errors (last 3):"
+sudo tail -3 /var/log/syslog | grep -i error || echo "No recent errors"
+
+echo ""
+echo "✅ DIAGNÓSTICO COMPLETADO"
+EOF
+
+# Hacer ejecutable y copiar a la VM
+chmod +x diagnose.sh
+scp -i ~/.ssh/oracle_key diagnose.sh ubuntu@143.47.38.168:~/
+
+# Ejecutar diagnóstico
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168 "./diagnose.sh"
+```
+
+## 📈 Optimización de Performance
+
+### Configuración Avanzada de Nginx
+
+```bash
+# Copiar configuración optimizada
+cat > nginx-optimized.conf << 'EOF'
+# /etc/nginx/nginx.conf - Configuración optimizada
+
+user www-data;
+worker_processes auto;
+worker_rlimit_nofile 65535;
+pid /run/nginx.pid;
+
+events {
+    worker_connections 1024;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    charset utf-8;
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    server_tokens off;
+    log_not_found off;
+    types_hash_max_size 4096;
+    client_max_body_size 16M;
+
+    # MIME
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # Logging
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log warn;
+
+    # Gzip Compression
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml;
 
     # Security Headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 
-    # Root directory
-    root /var/www/corporativa/build;
-    index index.html;
-
-    # Handle React Router
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Cache static assets
-    location /static/ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
+    # Load configs
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
 }
+EOF
+
+# Aplicar configuración
+scp -i ~/.ssh/oracle_key nginx-optimized.conf ubuntu@143.47.38.168:~/
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168 "
+sudo cp nginx-optimized.conf /etc/nginx/nginx.conf
+sudo nginx -t && sudo systemctl reload nginx
+"
 ```
+
+### Cache para Assets Estáticos
+
+```bash
+# Configuración de cache para React apps
+cat > cache-config.conf << 'EOF'
+# /etc/nginx/conf.d/cache.conf
+
+# HTML files - no cache
+location ~* \.html$ {
+    expires -1;
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    add_header Pragma "no-cache";
+}
+
+# CSS and JavaScript - long cache
+location ~* \.(css|js)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
+
+# Images - medium cache
+location ~* \.(jpg|jpeg|png|gif|ico|svg|webp)$ {
+    expires 6M;
+    add_header Cache-Control "public";
+}
+
+# Fonts - long cache
+location ~* \.(woff|woff2|ttf|eot)$ {
+    expires 1y;
+    add_header Cache-Control "public";
+    access_log off;
+}
+
+# Manifest and service worker - no cache
+location ~* \.(manifest|sw\.js)$ {
+    expires -1;
+    add_header Cache-Control "no-cache";
+}
+EOF
+
+# Aplicar configuración de cache
+scp -i ~/.ssh/oracle_key cache-config.conf ubuntu@143.47.38.168:~/
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168 "
+sudo cp cache-config.conf /etc/nginx/conf.d/
+sudo nginx -t && sudo systemctl reload nginx
+"
+```
+
+## � Checklist de Despliegue
+
+### ✅ Pre-despliegue
+
+- [ ] Oracle Cloud CLI configurado localmente
+- [ ] Credenciales OCI configuradas (`~/.oci/config`)
+- [ ] Clave SSH generada (`~/.ssh/oracle_key`)
+- [ ] Aplicaciones React funcionando localmente
+- [ ] Terraform instalado y configurado
+
+### ✅ Infraestructura
+
+- [ ] VCN y subnet creados en Oracle Cloud
+- [ ] VM ARM Instance desplegada
+- [ ] Security Lists configurados (puertos 22, 443)
+- [ ] Instancia accesible vía SSH
+- [ ] IP pública asignada: `143.47.38.168`
+
+### ✅ Servidor Web
+
+- [ ] Nginx instalado y corriendo
+- [ ] Aplicaciones React desplegadas en `/var/www/`
+- [ ] Configuración de virtual hosts
+- [ ] Firewall UFW configurado
+- [ ] SSL/TLS configurado (si aplica)
+
+### ✅ Aplicaciones
+
+- [ ] App Corporativa accesible
+- [ ] App Eyenga accesible
+- [ ] Routing de React Router funcionando
+- [ ] Assets estáticos cargando correctamente
+- [ ] Responsive design verificado
+
+### ✅ Monitoreo y Mantenimiento
+
+- [ ] Scripts de monitoreo configurados
+- [ ] Backup automático configurado
+- [ ] Logs de Nginx monitoreados
+- [ ] Cron jobs configurados
+- [ ] Documentación actualizada
+
+## 📞 Soporte y Contacto
+
+### Información de Acceso Rápido
+
+```bash
+# SSH a la VM
+ssh -i ~/.ssh/oracle_key ubuntu@143.47.38.168
+
+# URLs de las aplicaciones
+echo "Corporativa: http://143.47.38.168"
+echo "Eyenga: http://143.47.38.168/eyenga"
+
+# Comandos útiles en la VM
+sudo systemctl status nginx    # Estado de Nginx
+sudo nginx -t                  # Verificar configuración
+sudo systemctl reload nginx    # Recargar configuración
+./monitor.sh                   # Estado del sistema
+./diagnose.sh                  # Diagnóstico completo
+```
+
+### Recursos Adicionales
+
+- **Oracle Cloud Console**: https://cloud.oracle.com/
+- **Documentación Oracle Cloud**: https://docs.oracle.com/en-us/iaas/
+- **Terraform Oracle Provider**: https://registry.terraform.io/providers/oracle/oci/latest/docs
+- **Nginx Documentation**: https://nginx.org/en/docs/
 
 ---
 
-## 📊 Monitoreo y Analytics
+**Fecha de última actualización**: $(date '+%Y-%m-%d %H:%M:%S')
+**Versión**: v1.0.0
+**Mantenido por**: Executive Service Business Development Team
 
 ### Google Analytics 4
 

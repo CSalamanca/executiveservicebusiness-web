@@ -1,0 +1,54 @@
+# Terraform .gitignore específico para el directorio de infraestructura
+
+# Archivos de estado de Terraform (NUNCA versionar - contienen información sensible)
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate
+*.tfstate.*
+
+# Directorio de Terraform
+.terraform/
+.terraform.lock.hcl
+
+# Variables de configuración con información sensible
+terraform.tfvars
+terraform.tfvars.json
+*.tfvars
+*.tfvars.json
+
+# Archivos de plan
+*.tfplan
+tfplan*
+
+# Logs y crashes
+crash.log
+crash.*.log
+*.log
+
+# Claves SSH y certificados
+*.pem
+*.key
+*.crt
+keys/
+
+# Archivos de configuración específicos del usuario
+.terraformrc
+terraform.rc
+
+# Archivos temporales y overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Configuración de Oracle Cloud
+.oci/
+oci_config
+
+# Archivos de backup
+*.backup
+*.bak
+
+# Archivos temporales del sistema
+.DS_Store
+Thumbs.db

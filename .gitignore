@@ -102,3 +102,46 @@ jspm_packages/
 
 # Backup files
 *.backup.*
+
+# Terraform - Infraestructura como código
+# Archivos de estado de Terraform (contienen información sensible)
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+
+# Variables de Terraform con información sensible
+terraform/terraform.tfvars
+terraform/terraform.tfvars.json
+terraform/*.tfvars
+terraform/*.tfvars.json
+
+# Archivos de plan de Terraform
+terraform/*.tfplan
+terraform/tfplan*
+
+# Archivos de crash de Terraform
+terraform/crash.log
+terraform/crash.*.log
+
+# Logs de Terraform
+terraform/*.log
+
+# Claves SSH (por seguridad)
+terraform/keys/
+terraform/*.pem
+terraform/*.key
+
+# Archivos de configuración específicos del usuario
+terraform/.terraformrc
+terraform/terraform.rc
+
+# Archivos temporales de Terraform
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
+
+# Archivos de configuración de Oracle Cloud (si están en el proyecto)
+terraform/.oci/
+terraform/oci_config
