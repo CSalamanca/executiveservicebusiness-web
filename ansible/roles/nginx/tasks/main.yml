@@ -23,9 +23,9 @@
   loop:
     - "{{ web_root }}/html" # Solo para página de índice y validación SSL
 
-- name: Crear configuración de Nginx para las aplicaciones
+- name: Crear configuración de Nginx para las aplicaciones (HTTP temporal)
   template:
-    src: nginx-sites.conf.j2
+    src: nginx-sites-http.conf.j2
     dest: "{{ nginx_sites_available }}/executiveservicebusiness"
     owner: root
     group: root

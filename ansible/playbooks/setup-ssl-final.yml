@@ -1,0 +1,238 @@
+---
+# Playbook para configurar SSL con Let's Encrypt - CONFIGURACIÓN FINAL
+# Basado en la configuración exitosa desplegada
+
+- name: Configurar SSL/TLS con Let's Encrypt - Final
+  hosts: esb_vms
+  become: yes
+  gather_facts: yes
+
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  pre_tasks:
+    - name: Verificar que Nginx está funcionando
+      uri:
+        url: "http://localhost"
+        method: GET
+      register: nginx_check
+      failed_when: false
+
+    - name: Mostrar estado de Nginx
+      debug:
+        msg: "Nginx: {{ 'OK' if nginx_check.status == 200 else 'No disponible' }}"
+
+    - name: Fallar si Nginx no está disponible
+      fail:
+        msg: "Nginx debe estar funcionando antes de configurar SSL"
+      when: nginx_check.status != 200
+
+  tasks:
+    - name: Instalar Certbot y dependencias
+      apt:
+        name:
+          - certbot
+          - python3-certbot-nginx
+          - openssl
+        state: present
+        update_cache: yes
+
+    - name: Crear certificado autofirmado para acceso por IP
+      shell: |
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /etc/ssl/private/nginx-selfsigned.key \
+        -out /etc/ssl/certs/nginx-selfsigned.crt \
+        -subj "/C=ES/ST=Madrid/L=Madrid/O=Executive Service Business/CN={{ ansible_default_ipv4.address }}"
+      args:
+        creates: /etc/ssl/certs/nginx-selfsigned.crt
+
+    - name: Configurar permisos del certificado autofirmado
+      file:
+        path: "{{ item }}"
+        mode: "0600"
+        owner: root
+        group: root
+      loop:
+        - /etc/ssl/private/nginx-selfsigned.key
+        - /etc/ssl/certs/nginx-selfsigned.crt
+
+    - name: Verificar resolución DNS de dominios
+      shell: "dig +short {{ item }} @8.8.8.8"
+      register: dns_resolution
+      loop:
+        - "{{ corporativa_domain }}"
+        - "{{ eyenga_domain }}"
+
+    - name: Mostrar resolución DNS
+      debug:
+        msg: "{{ item.item }}: {{ item.stdout if item.stdout else 'No resuelve' }}"
+      loop: "{{ dns_resolution.results }}"
+
+    - name: Verificar que los dominios apuntan a este servidor
+      fail:
+        msg: "El dominio {{ item.item }} no apunta a {{ ansible_host }}"
+      when: item.stdout != ansible_host
+      loop: "{{ dns_resolution.results }}"
+
+    - name: Crear configuración temporal Nginx para validación SSL
+      copy:
+        content: |
+          server {
+              listen 80;
+              server_name {{ corporativa_domain }} {{ eyenga_domain }};
+              
+              location /.well-known/acme-challenge/ {
+                  root /var/www/html;
+                  allow all;
+              }
+              
+              location / {
+                  return 200 'Validando SSL...';
+                  add_header Content-Type text/plain;
+              }
+          }
+        dest: /etc/nginx/sites-available/ssl-webapp
+        backup: yes
+
+    - name: Crear directorio para validación SSL
+      file:
+        path: /var/www/html
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+
+    - name: Activar configuración temporal
+      file:
+        src: /etc/nginx/sites-available/ssl-webapp
+        dest: /etc/nginx/sites-enabled/ssl-webapp
+        state: link
+
+    - name: Recargar Nginx con configuración temporal
+      systemd:
+        name: nginx
+        state: reloaded
+
+    - name: Abrir puerto 80 temporalmente en iptables para Let's Encrypt
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: "80"
+        jump: ACCEPT
+        action: insert
+        rule_num: 1
+
+    - name: Obtener certificados SSL para cada dominio por separado
+      command: >
+        certbot certonly
+        --webroot
+        -w /var/www/html
+        -d {{ item }}
+        --non-interactive
+        --agree-tos
+        --email {{ letsencrypt_email }}
+        --force-renewal
+      register: certbot_result
+      loop:
+        - "{{ corporativa_domain }}"
+        - "{{ eyenga_domain }}"
+
+    - name: Mostrar resultado de Certbot
+      debug:
+        msg: "Certificado para {{ item.item }}: {{ 'Obtenido' if item.rc == 0 else 'Error' }}"
+      loop: "{{ certbot_result.results }}"
+
+    - name: Cerrar puerto 80 en iptables
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: "80"
+        jump: ACCEPT
+        action: absent
+
+    - name: Crear hook post-renovación SSL
+      copy:
+        content: |
+          #!/bin/bash
+          # Hook post-renovación SSL para Executive Service Business
+
+          # Logs
+          LOG_FILE="/var/log/ssl-renewal-hook.log"
+
+          echo "$(date): Iniciando hook post-renovación SSL" >> $LOG_FILE
+
+          # Verificar que los certificados existen
+          if [ -f "/etc/letsencrypt/live/{{ corporativa_domain }}/fullchain.pem" ] && \
+             [ -f "/etc/letsencrypt/live/{{ eyenga_domain }}/fullchain.pem" ]; then
+              echo "$(date): Certificados encontrados, recargando Nginx" >> $LOG_FILE
+              systemctl reload nginx
+              echo "$(date): Nginx recargado exitosamente" >> $LOG_FILE
+          else
+              echo "$(date): ERROR - Certificados no encontrados" >> $LOG_FILE
+          fi
+
+          echo "$(date): Hook post-renovación completado" >> $LOG_FILE
+        dest: /usr/local/bin/ssl-renewal-hook.sh
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Restaurar configuración Nginx con SSL final
+      template:
+        src: ../roles/nginx/templates/nginx-sites-ssl-final.conf.j2
+        dest: /etc/nginx/sites-available/ssl-webapp
+        backup: yes
+      notify: restart nginx
+
+    - name: Verificar configuración de Nginx
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
+
+    - name: Mostrar resultado de verificación
+      debug:
+        msg: "Configuración de Nginx: {{ nginx_test.stderr }}"
+
+    - name: Configurar renovación automática con cron (método más simple y robusto)
+      cron:
+        name: "Renovación automática SSL Let's Encrypt"
+        minute: "0"
+        hour: "12"
+        day: "1,15"
+        month: "*"
+        weekday: "*"
+        job: "/usr/bin/certbot renew --quiet --post-hook '/usr/local/bin/ssl-renewal-hook.sh'"
+        user: root
+
+    - name: Configurar permisos de archivos web
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+        recurse: yes
+      loop:
+        - /var/www/html/corporativa
+        - /var/www/html/eyenga
+
+    - name: Verificar que los sitios responden con HTTPS
+      uri:
+        url: "https://{{ item }}"
+        method: GET
+        validate_certs: yes
+      register: https_check
+      loop:
+        - "{{ corporativa_domain }}"
+        - "{{ eyenga_domain }}"
+
+    - name: Mostrar estado de sitios HTTPS
+      debug:
+        msg: "{{ item.item }}: {{ 'OK (HTTP ' + item.status|string + ')' if item.status == 200 else 'Error' }}"
+      loop: "{{ https_check.results }}"
+
+  handlers:
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted

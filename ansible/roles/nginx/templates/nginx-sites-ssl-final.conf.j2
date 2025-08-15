@@ -1,0 +1,178 @@
+# Configuración Nginx para Executive Service Business
+# SSL/TLS configurado para aplicaciones React estáticas - CONFIGURACIÓN FINAL
+# Generado automáticamente por Ansible
+
+# Redirección de HTTP a HTTPS para todos los dominios
+server {
+    listen 80;
+    server_name {{ corporativa_domain }} {{ eyenga_domain }};
+    
+    # Permitir acceso a archivos .well-known para renovación de certificados
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+        allow all;
+    }
+    
+    # Redireccionar todo lo demás a HTTPS
+    location / {
+        return 301 https://$server_name$request_uri;
+    }
+}
+
+# Configuración HTTPS para Corporativa (archivos estáticos)
+server {
+    listen 443 ssl http2;
+    server_name {{ corporativa_domain }};
+    
+    # Configuración SSL
+    ssl_certificate /etc/letsencrypt/live/{{ corporativa_domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ corporativa_domain }}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+    
+    # Logs específicos
+    access_log /var/log/nginx/corporativa-access.log;
+    error_log /var/log/nginx/corporativa-error.log;
+    
+    # Headers de seguridad
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:;" always;
+    
+    # Configuración para aplicación React estática
+    root /var/www/html/corporativa;
+    index index.html index.htm;
+    
+    # Configuración para SPA (Single Page Application)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Archivos estáticos con cache optimizado
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Vary Accept-Encoding;
+    }
+    
+    # Compresión gzip
+    location ~* \.(js|css|html|xml|txt)$ {
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/javascript
+            application/xml+rss
+            application/json;
+    }
+}
+
+# Configuración HTTPS para Eyenga (archivos estáticos)
+server {
+    listen 443 ssl http2;
+    server_name {{ eyenga_domain }};
+    
+    # Configuración SSL - certificado separado para eyenga
+    ssl_certificate /etc/letsencrypt/live/{{ eyenga_domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ eyenga_domain }}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+    
+    # Logs específicos
+    access_log /var/log/nginx/eyenga-access.log;
+    error_log /var/log/nginx/eyenga-error.log;
+    
+    # Headers de seguridad
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:;" always;
+    
+    # Configuración para aplicación React estática
+    root /var/www/html/eyenga;
+    index index.html index.htm;
+    
+    # Configuración para SPA (Single Page Application)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Archivos estáticos con cache optimizado
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Vary Accept-Encoding;
+    }
+    
+    # Compresión gzip
+    location ~* \.(js|css|html|xml|txt)$ {
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/javascript
+            application/xml+rss
+            application/json;
+    }
+}
+
+# Servidor por defecto para acceso por IP (solo HTTPS)
+server {
+    listen 443 ssl http2 default_server;
+    listen [::]:443 ssl http2 default_server;
+    server_name _;
+    
+    # Certificado autofirmado para IP directa
+    ssl_certificate /etc/ssl/certs/nginx-selfsigned.crt;
+    ssl_certificate_key /etc/ssl/private/nginx-selfsigned.key;
+    
+    # Logs del servidor por defecto
+    access_log /var/log/nginx/default-access.log;
+    error_log /var/log/nginx/default-error.log;
+    
+    # Página principal con enlaces a las aplicaciones
+    location / {
+        return 200 '<!DOCTYPE html>
+<html>
+<head>
+    <title>Executive Service Business</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 30px; }
+        .app-links { margin: 30px 0; }
+        .app-link { display: inline-block; margin: 10px; padding: 15px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; transition: background 0.3s; }
+        .app-link:hover { background: #0056b3; }
+        .status { margin-top: 30px; padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Executive Service Business</h1>
+        <p>Aplicaciones desplegadas correctamente con SSL/HTTPS</p>
+        <div class="app-links">
+            <a href="https://executiveservicebusiness.duckdns.org" class="app-link">💼 Aplicación Corporativa</a>
+            <a href="https://eyenga.duckdns.org" class="app-link">🌱 Eyenga</a>
+        </div>
+        <div class="status">
+            <strong>✅ Estado:</strong> Todas las aplicaciones funcionando con certificados SSL válidos
+        </div>
+    </div>
+</body>
+</html>';
+        add_header Content-Type text/html;
+    }
+}

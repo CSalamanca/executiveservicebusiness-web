@@ -62,6 +62,29 @@ npm run dev:eyenga        # http://localhost:3001
 
 **¡Completamente GRATUITO - $0.00/mes!**
 
+#### Configuración Final SSL (Probada en Producción) ⭐
+
+```bash
+# 1. Configurar infraestructura
+cd terraform/
+terraform apply -auto-approve
+
+# 2. Aplicar configuración SSL final
+cd ../ansible/
+./deploy.sh
+# Opción 7: 🎯 Aplicar configuración SSL final (working)
+
+# 3. Verificar despliegue
+./verify-deployment.sh
+```
+
+**URLs de acceso:**
+
+- 🏢 **Corporativa**: https://executiveservicebusiness.duckdns.org
+- 🌱 **Eyenga**: https://eyenga.duckdns.org
+
+#### Configuración Manual (Paso a Paso)
+
 ```bash
 # 1. Ir al directorio de infraestructura
 cd terraform/
@@ -75,9 +98,9 @@ terraform init
 terraform plan
 terraform apply
 
-# 4. Acceder a las aplicaciones
-# http://TU_IP_PUBLICA/corporativa
-# http://TU_IP_PUBLICA/eyenga
+# 4. Configurar aplicaciones con Ansible
+cd ../ansible/
+./deploy.sh
 ```
 
 **📖 [Guía Completa de Despliegue en Oracle Cloud](terraform/README_FREE_TIER.md)**

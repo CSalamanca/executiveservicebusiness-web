@@ -1,0 +1,127 @@
+# Configuración temporal de Nginx para validación SSL
+# Solo HTTP, antes de obtener certificados Let's Encrypt
+
+# Servidor para Corporativa (archivos estáticos)
+server {
+    listen 80;
+    server_name {{ corporativa_domain }};
+    
+    root /var/www/html/corporativa;
+    index index.html index.htm;
+    
+    # Logs específicos
+    access_log /var/log/nginx/corporativa-access.log;
+    error_log /var/log/nginx/corporativa-error.log;
+    
+    # Configuración para SPA (Single Page Application)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Archivos estáticos con cache
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # Permitir acceso a archivos .well-known para validación Let's Encrypt
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+        allow all;
+    }
+}
+
+# Servidor para Eyenga (archivos estáticos)
+server {
+    listen 80;
+    server_name {{ eyenga_domain }};
+    
+    root /var/www/html/eyenga;
+    index index.html index.htm;
+    
+    # Logs específicos
+    access_log /var/log/nginx/eyenga-access.log;
+    error_log /var/log/nginx/eyenga-error.log;
+    
+    # Configuración para SPA (Single Page Application)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Archivos estáticos con cache
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # Permitir acceso a archivos .well-known para validación Let's Encrypt
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+        allow all;
+    }
+}
+
+# Servidor por defecto
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    
+    root /var/www/html;
+    index index.html index.htm;
+    
+    # Logs del servidor por defecto
+    access_log /var/log/nginx/default-access.log;
+    error_log /var/log/nginx/default-error.log;
+    
+    # Página principal con enlaces a las aplicaciones
+    location / {
+        return 200 '<!DOCTYPE html>
+<html>
+<head>
+    <title>Executive Service Business</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .app-link { display: inline-block; margin: 20px; padding: 20px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 8px; transition: background 0.3s; }
+        .app-link:hover { background: #0056b3; }
+        .status { margin: 20px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Executive Service Business</h1>
+        <div class="status">🔧 Configurando SSL...</div>
+        <p>Accede a las aplicaciones:</p>
+        <a href="http://{{ corporativa_domain }}" class="app-link">
+            🏢 Aplicación Corporativa
+        </a>
+        <a href="http://{{ eyenga_domain }}" class="app-link">
+            🎓 Eyenga
+        </a>
+        <p style="margin-top: 30px; color: #666; font-size: 14px;">
+            Servidor: {{ ansible_hostname }} | SSL en configuración
+        </p>
+    </div>
+</body>
+</html>';
+        add_header Content-Type text/html;
+    }
+    
+    # Permitir acceso a archivos .well-known para validación Let's Encrypt
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+        allow all;
+    }
+    
+    # Status de servidor
+    location /status {
+        access_log off;
+        return 200 "Nginx funcionando - Configurando SSL\nAplicaciones: corporativa (estática), eyenga (estática)\n";
+        add_header Content-Type text/plain;
+    }
+}
+
+# Configuración global optimizada
+client_max_body_size {{ nginx_client_max_body_size }};
+server_tokens off;

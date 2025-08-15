@@ -51,8 +51,8 @@
     - name: Crear backup de aplicaciones actuales
       archive:
         path:
-          - "{{ apps.corporativa.path }}"
-          - "{{ apps.eyenga.path }}"
+          - "/var/www/html/corporativa"
+          - "/var/www/html/eyenga"
         dest: "/home/{{ app_user }}/backup-apps-{{ ansible_date_time.epoch }}.tar.gz"
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
@@ -63,8 +63,8 @@
         path: "{{ item }}"
         state: absent
       loop:
-        - "{{ apps.corporativa.path }}"
-        - "{{ apps.eyenga.path }}"
+        - "/var/www/html/corporativa"
+        - "/var/www/html/eyenga"
 
     - name: Recrear directorios web
       file:
@@ -74,13 +74,13 @@
         group: www-data
         mode: "0755"
       loop:
-        - "{{ apps.corporativa.path }}"
-        - "{{ apps.eyenga.path }}"
+        - "/var/www/html/corporativa"
+        - "/var/www/html/eyenga"
 
     - name: Copiar nueva versión de Corporativa
       copy:
-        src: "{{ apps.corporativa.build_path }}/"
-        dest: "{{ apps.corporativa.path }}/"
+        src: "{{ app_directory }}/apps/corporativa/build/"
+        dest: "/var/www/html/corporativa/"
         owner: www-data
         group: www-data
         mode: "0644"
@@ -88,8 +88,8 @@
 
     - name: Copiar nueva versión de Eyenga
       copy:
-        src: "{{ apps.eyenga.build_path }}/"
-        dest: "{{ apps.eyenga.path }}/"
+        src: "{{ app_directory }}/apps/eyenga/build/"
+        dest: "/var/www/html/eyenga/"
         owner: www-data
         group: www-data
         mode: "0644"

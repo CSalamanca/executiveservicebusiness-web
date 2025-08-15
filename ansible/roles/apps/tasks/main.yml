@@ -45,6 +45,15 @@
     group: "{{ app_user }}"
     mode: "0755"
 
+- name: Crear directorio para el repositorio
+  file:
+    path: "{{ app_directory }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+  become: yes
+
 - name: Clonar o actualizar repositorio Git
   git:
     repo: "{{ git_repo }}"

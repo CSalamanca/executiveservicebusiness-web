@@ -1,0 +1,140 @@
+---
+# Playbook para desplegar aplicaciones React como archivos estáticos
+# Configuración final basada en despliegue exitoso
+
+- name: Desplegar aplicaciones React estáticas
+  hosts: esb_vms
+  become: yes
+  gather_facts: yes
+
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    corporativa_build_path: "{{ ansible_env.HOME }}/corporativa-build"
+    eyenga_build_path: "{{ ansible_env.HOME }}/eyenga-build"
+
+  tasks:
+    - name: Crear directorios de trabajo temporal
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+      loop:
+        - "{{ corporativa_build_path }}"
+        - "{{ eyenga_build_path }}"
+
+    - name: Crear directorios web finales
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+      loop:
+        - /var/www/html/corporativa
+        - /var/www/html/eyenga
+
+    - name: Copiar archivos de aplicación corporativa desde workspace local
+      copy:
+        src: "{{ playbook_dir }}/../../apps/corporativa/"
+        dest: "{{ corporativa_build_path }}"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0644"
+
+    - name: Copiar archivos de aplicación Eyenga desde workspace local
+      copy:
+        src: "{{ playbook_dir }}/../../apps/eyenga/"
+        dest: "{{ eyenga_build_path }}"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0644"
+
+    - name: Instalar dependencias de aplicación corporativa
+      shell: |
+        cd {{ corporativa_build_path }}
+        npm ci --only=production
+      environment:
+        NODE_ENV: production
+
+    - name: Instalar dependencias de aplicación Eyenga
+      shell: |
+        cd {{ eyenga_build_path }}
+        npm ci --only=production
+      environment:
+        NODE_ENV: production
+
+    - name: Compilar aplicación corporativa
+      shell: |
+        cd {{ corporativa_build_path }}
+        npm run build
+      environment:
+        NODE_ENV: production
+        GENERATE_SOURCEMAP: "false"
+
+    - name: Compilar aplicación Eyenga
+      shell: |
+        cd {{ eyenga_build_path }}
+        npm run build
+      environment:
+        NODE_ENV: production
+        GENERATE_SOURCEMAP: "false"
+
+    - name: Desplegar archivos compilados de aplicación corporativa
+      shell: |
+        cp -r {{ corporativa_build_path }}/build/* /var/www/html/corporativa/
+        chown -R www-data:www-data /var/www/html/corporativa
+        chmod -R 755 /var/www/html/corporativa
+
+    - name: Desplegar archivos compilados de aplicación Eyenga
+      shell: |
+        cp -r {{ eyenga_build_path }}/build/* /var/www/html/eyenga/
+        chown -R www-data:www-data /var/www/html/eyenga
+        chmod -R 755 /var/www/html/eyenga
+
+    - name: Verificar que los archivos se han desplegado correctamente
+      stat:
+        path: "{{ item }}"
+      register: app_files
+      loop:
+        - /var/www/html/corporativa/index.html
+        - /var/www/html/eyenga/index.html
+
+    - name: Mostrar estado de archivos desplegados
+      debug:
+        msg: "{{ item.item }}: {{ 'OK' if item.stat.exists else 'NO ENCONTRADO' }}"
+      loop: "{{ app_files.results }}"
+
+    - name: Limpiar directorios temporales
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ corporativa_build_path }}"
+        - "{{ eyenga_build_path }}"
+
+    - name: Recargar Nginx para aplicar cambios
+      systemd:
+        name: nginx
+        state: reloaded
+
+    - name: Verificar estado de Nginx
+      systemd:
+        name: nginx
+      register: nginx_status
+
+    - name: Mostrar estado de Nginx
+      debug:
+        msg: "Nginx: {{ nginx_status.status.ActiveState }}"
+
+    - name: Verificar acceso a aplicaciones (HTTP)
+      uri:
+        url: "http://localhost"
+        method: GET
+      register: local_check
+      failed_when: false
+
+    - name: Mostrar resultado de verificación local
+      debug:
+        msg: "Acceso local: {{ 'OK' if local_check.status == 200 else 'Error' }}"

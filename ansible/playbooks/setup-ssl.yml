@@ -10,25 +10,21 @@
     ansible_python_interpreter: /usr/bin/python3
 
   pre_tasks:
-    - name: Verificar que las aplicaciones React están corriendo
+    - name: Verificar que Nginx está funcionando
       uri:
-        url: "http://127.0.0.1:{{ item }}"
+        url: "http://localhost"
         method: GET
-      register: app_check
+      register: nginx_check
       failed_when: false
-      loop:
-        - 3000 # Corporativa
-        - 3001 # Eyenga
 
-    - name: Mostrar estado de aplicaciones
+    - name: Mostrar estado de Nginx
       debug:
-        msg: "App en puerto {{ item.item }}: {{ 'OK' if item.status == 200 else 'No disponible' }}"
-      loop: "{{ app_check.results }}"
+        msg: "Nginx: {{ 'OK' if nginx_check.status == 200 else 'No disponible' }}"
 
-    - name: Fallar si las aplicaciones no están disponibles
+    - name: Fallar si Nginx no está disponible
       fail:
-        msg: "Las aplicaciones React deben estar corriendo antes de configurar SSL"
-      when: app_check.results | selectattr('status', 'ne', 200) | list | length > 0
+        msg: "Nginx debe estar funcionando antes de configurar SSL"
+      when: nginx_check.status != 200
 
   tasks:
     - name: Instalar Certbot y dependencias
@@ -63,8 +59,8 @@
 
     - name: Verificar que los dominios apuntan a este servidor
       fail:
-        msg: "El dominio {{ item.item }} no apunta a {{ ansible_default_ipv4.address }}"
-      when: item.stdout != ansible_default_ipv4.address
+        msg: "El dominio {{ item.item }} no apunta a {{ ansible_host }}"
+      when: item.stdout != ansible_host
       loop: "{{ dns_resolution.results }}"
 
     - name: Crear configuración temporal Nginx para validación SSL
@@ -156,7 +152,7 @@
 
     - name: Restaurar configuración Nginx con SSL
       template:
-        src: ../roles/nginx/templates/nginx-sites.conf.j2
+        src: ../roles/nginx/templates/nginx-sites-ssl-static.conf.j2
         dest: /etc/nginx/sites-available/webapp
         backup: yes
       notify: restart nginx

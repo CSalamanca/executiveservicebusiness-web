@@ -47,7 +47,25 @@
   - [ ] HTTPS redirect
   - [ ] Renovación automática de certificados
 
-## 🏗️ Proceso de Build y Despliegue Manual (Alternativo)
+## 🔥 Despliegue Rápido (Configuración Final)
+
+**¡NUEVA OPCIÓN!** - Configuración SSL final probada en producción:
+
+```bash
+cd ansible/
+./deploy.sh
+# Opción 7: 🎯 Aplicar configuración SSL final (working)
+```
+
+Esta opción aplica la configuración exacta que está funcionando en producción con:
+
+- ✅ Certificados SSL separados para cada dominio
+- ✅ Nginx configurado para archivos estáticos (no proxy)
+- ✅ Firewall restrictivo (solo puertos 22 y 443)
+- ✅ Renovación automática de certificados
+- ✅ Headers de seguridad optimizados
+
+## 🏗️ Despliegue Completo desde Cero
 
 ```
 ┌─────────────────────────────────────────┐

@@ -52,8 +52,9 @@ echo "3) 🔒 Configurar SSL/HTTPS"
 echo "4) 🛡️  Gestión avanzada SSL"
 echo "5) 🧪 Solo verificar conectividad"
 echo "6) 📋 Ver logs del servidor"
+echo "7) 🎯 Aplicar configuración SSL final (working)"
 echo ""
-read -p "Opción (1-6): " choice
+read -p "Opción (1-7): " choice
 
 case $choice in
     1)
@@ -93,6 +94,16 @@ case $choice in
         echo ""
         echo "3. Estado de servicios:"
         ansible esb_vms -m shell -a "systemctl status nginx --no-pager -l"
+        ;;
+    7)
+        echo -e "${BLUE}🎯 Aplicando configuración SSL final (basada en despliegue exitoso)...${NC}"
+        echo -e "${YELLOW}⚠️  Esta opción aplica la configuración SSL que está funcionando en producción${NC}"
+        read -p "¿Continuar? (y/N): " confirm
+        if [[ $confirm =~ ^[Yy]$ ]]; then
+            ansible-playbook -i inventory/hosts.yml playbooks/setup-ssl-final.yml -v
+        else
+            echo "Cancelado"
+        fi
         ;;
     *)
         echo -e "${RED}Opción inválida${NC}"

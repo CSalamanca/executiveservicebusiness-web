@@ -1,0 +1,160 @@
+# Configuración Nginx HTTP temporal para Executive Service Business
+# Proxy reverso sin SSL - para configuración inicial
+# Generado automáticamente por Ansible
+
+# Configuración HTTP para Corporativa (proxy a puerto 3000)
+server {
+    listen 80;
+    server_name {{ corporativa_domain }};
+    
+    # Logs específicos
+    access_log /var/log/nginx/corporativa-access.log;
+    error_log /var/log/nginx/corporativa-error.log;
+    
+    # Headers de seguridad básicos
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    
+    # Proxy a la aplicación React en puerto 3000
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
+        
+        # Timeouts para aplicaciones React
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+    
+    # WebSocket support para React Hot Reload (desarrollo)
+    location /sockjs-node {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Configuración HTTP para Eyenga (proxy a puerto 3001)
+server {
+    listen 80;
+    server_name {{ eyenga_domain }};
+    
+    # Logs específicos
+    access_log /var/log/nginx/eyenga-access.log;
+    error_log /var/log/nginx/eyenga-error.log;
+    
+    # Headers de seguridad básicos
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    
+    # Proxy a la aplicación React en puerto 3001
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
+        
+        # Timeouts para aplicaciones React
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+    
+    # WebSocket support para React Hot Reload (desarrollo)
+    location /sockjs-node {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Servidor por defecto para acceso por IP
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    
+    # Logs del servidor por defecto
+    access_log /var/log/nginx/default-access.log;
+    error_log /var/log/nginx/default-error.log;
+    
+    # Página principal con enlaces a las aplicaciones
+    location / {
+        return 200 '<!DOCTYPE html>
+<html>
+<head>
+    <title>Executive Service Business</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .app-link { display: inline-block; margin: 20px; padding: 20px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 8px; transition: background 0.3s; }
+        .app-link:hover { background: #0056b3; }
+        .status { margin: 20px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Executive Service Business</h1>
+        <div class="status">⚠️ Configuración HTTP temporal - SSL pendiente</div>
+        <p>Accede a las aplicaciones:</p>
+        <a href="http://{{ corporativa_domain }}" class="app-link">
+            🏢 Aplicación Corporativa
+        </a>
+        <a href="http://{{ eyenga_domain }}" class="app-link">
+            🎓 Eyenga
+        </a>
+        <p style="margin-top: 30px; color: #666; font-size: 14px;">
+            Servidor: {{ ansible_hostname }} | IP: {{ ansible_default_ipv4.address }}
+        </p>
+    </div>
+</body>
+</html>';
+        add_header Content-Type text/html;
+    }
+    
+    # Status de servidor
+    location /status {
+        access_log off;
+        return 200 "Nginx funcionando correctamente - Proxy reverso activo (HTTP)\nAplicaciones: corporativa:3000, eyenga:3001\n";
+        add_header Content-Type text/plain;
+    }
+}
+
+# Configuración global optimizada
+client_max_body_size {{ nginx_client_max_body_size }};
+server_tokens off;
+
+# Rate limiting para protección DDoS
+limit_req_zone $binary_remote_addr zone=login:10m rate=10r/m;
+limit_req_zone $binary_remote_addr zone=global:10m rate=30r/m;
+
+# Configuración de buffers
+proxy_buffer_size 64k;
+proxy_buffers 8 64k;
+proxy_busy_buffers_size 64k;
