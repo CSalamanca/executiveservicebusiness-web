@@ -25,19 +25,29 @@
   - [x] Claves SSH generadas
   - [x] .gitignore para archivos sensibles
 
-### 🔄 Pendiente
+### 🔄 En Desarrollo
+
+- [x] **Automatización con Ansible**
+
+  - [x] Framework completo de Ansible creado
+  - [x] Roles para DuckDNS, Nginx y aplicaciones
+  - [x] Playbooks de deployment y mantenimiento
+  - [x] Scripts de utilidades automatizados
+  - [ ] Configuración de tokens DuckDNS
+  - [ ] Ejecución de deployment inicial
 
 - [ ] **Instalación de Aplicaciones**
-  - [ ] Corrección del script cloud-init
-  - [ ] Instalación manual de Node.js, Nginx, Git
-  - [ ] Clonado y build de aplicaciones React
-  - [ ] Configuración de Nginx multi-site
-- [ ] **Configuración SSL**
-  - [ ] Configuración de dominios
-  - [ ] Certificados Let's Encrypt
-  - [ ] HTTPS redirect
 
-## 🏗️ Arquitectura de Despliegue
+  - [ ] Deployment automático con Ansible
+  - [ ] Configuración de Nginx multi-site
+  - [ ] Configuración de dominios DuckDNS
+
+- [ ] **Configuración SSL**
+  - [ ] Configuración automatizada Let's Encrypt
+  - [ ] HTTPS redirect
+  - [ ] Renovación automática de certificados
+
+## 🏗️ Proceso de Build y Despliegue Manual (Alternativo)
 
 ```
 ┌─────────────────────────────────────────┐
@@ -79,7 +89,7 @@ USER_OCID=ocid1.user.oc1..aaaaaaaahu4icrylrpamush4g36p6tsvicup5fvgfp2aevc7xol435
 REGION=eu-madrid-1
 ```
 
-### Configuración de Dominios (Futuro)
+### Configuración de Dominios DuckDNS
 
 ```json
 {
@@ -88,18 +98,63 @@ REGION=eu-madrid-1
       "local": { "domain": "corporativa.local", "port": 3000 },
       "development": { "domain": "143.47.38.168/corporativa", "port": 443 },
       "production": {
-        "domain": "corporativa.executiveservice.com",
+        "domain": "executiveservicebusiness.duckdns.org",
         "port": 443
       }
     },
     "eyenga": {
       "local": { "domain": "eyenga.local", "port": 3001 },
       "development": { "domain": "143.47.38.168/eyenga", "port": 443 },
-      "production": { "domain": "eyenga.executiveservice.com", "port": 443 }
+      "production": { "domain": "eyenga.duckdns.org", "port": 443 }
     }
   }
 }
 ```
+
+## 🔒 SSL/HTTPS con Renovación Automática
+
+### Certificados Let's Encrypt
+
+Los certificados SSL se configuran automáticamente con renovación automática robusta:
+
+```bash
+cd ansible/
+./deploy.sh
+# Opción 3: Configurar SSL/HTTPS
+```
+
+#### **Sistema de Renovación Automática**
+
+- **Systemd Timer**: 2 veces al día (06:00, 18:00)
+- **Cron Backup**: 1 vez al día (02:30)
+- **Verificación**: Diariamente a las 08:00
+- **Hooks**: Post-renovación automáticos
+
+#### **Gestión SSL**
+
+```bash
+# Herramienta de gestión SSL
+./ssl-manager.sh
+
+# Opciones disponibles:
+# 1. Ver estado de certificados
+# 2. Verificar conectividad HTTPS
+# 3. Ver logs de renovación
+# 4. Forzar renovación
+# 5. Test de renovación (dry-run)
+# 6. Reiniciar servicios SSL
+# 7. Verificar configuración
+# 8. Ver información del sistema
+# 9. SSH al servidor
+```
+
+### Monitoreo SSL
+
+Los logs de renovación se encuentran en:
+
+- `/var/log/certbot-renewal.log` - Renovación automática
+- `/var/log/ssl-check.log` - Verificación diaria
+- `/var/log/ssl-renewal-hook.log` - Post-renovación hooks
 
 ## 🔧 Comandos de Administración
 
@@ -142,7 +197,35 @@ terraform apply
 terraform destroy
 ```
 
-## 🏗️ Proceso de Build y Despliegue
+## 🚀 Despliegue con Ansible (Recomendado)
+
+### Configuración Inicial
+
+```bash
+# 1. Navegar al directorio de Ansible
+cd /workspace/ansible
+
+# 2. Configurar tokens DuckDNS en inventory/hosts.yml
+# Editar las variables duckdns_tokens con tus tokens reales
+
+# 3. Verificar conectividad
+ansible esb_vms -m ping
+
+# 4. Ejecutar deployment completo
+./deploy.sh
+# Seleccionar opción 1: Deployment completo
+```
+
+### Funcionalidades de Ansible
+
+- **DuckDNS**: Actualización automática de DNS cada 30 minutos
+- **Nginx**: Configuración multi-dominio con SSL
+- **Aplicaciones**: Deployment automatizado desde Git
+- **Monitoreo**: Scripts de utilidades y mantenimiento
+
+Ver documentación completa en: `/workspace/ansible/README.md`
+
+---
 
 ### Opción 1: Instalación Manual (Recomendado para resolver problemas)
 

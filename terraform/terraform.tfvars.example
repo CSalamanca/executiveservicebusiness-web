@@ -27,7 +27,7 @@ project_name = "ebs"
 instance_shape     = "VM.Standard.A1.Flex"  # NO CAMBIAR - Solo este está en Free Tier
 instance_ocpus     = 4                      # Máximo en Free Tier
 instance_memory_gb = 24                     # Máximo en Free Tier
-boot_volume_size_gb = 100                    # Puedes usar hasta 200GB gratis
+boot_volume_size_gb = 150                   # Expandido a 150GB (máximo 200GB gratis)
 
 # =============================================================================
 # CONFIGURACIÓN DE RED
@@ -35,12 +35,12 @@ boot_volume_size_gb = 100                    # Puedes usar hasta 200GB gratis
 hostname_label = "vm-esb"
 
 # =============================================================================
-# DOMINIOS (OPCIONAL)
+# DOMINIOS DUCKDNS (CONFIGURADOS)
 # =============================================================================
-# Si tienes dominios propios, configúralos aquí
-# Si no, puedes acceder por IP: http://IP_PUBLICA/corporativa y http://IP_PUBLICA/eyenga
-corporativa_domain = "corporativa.tudominio.com"  # Cambia por tu dominio
-eyenga_domain     = "eyenga.tudominio.com"        # Cambia por tu dominio
+# Usando DuckDNS para DNS dinámico gratuito
+# Las aplicaciones estarán disponibles en estos dominios después del deployment con Ansible
+corporativa_domain = "executiveservicebusiness.duckdns.org"
+eyenga_domain     = "eyenga.duckdns.org"
 
 # =============================================================================
 # CLAVE SSH (REQUERIDA)

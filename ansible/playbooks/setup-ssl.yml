@@ -1,0 +1,381 @@
+---
+# Playbook para configurar SSL con Let's Encrypt
+
+- name: Configurar SSL/TLS con Let's Encrypt
+  hosts: esb_vms
+  become: yes
+  gather_facts: yes
+
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  pre_tasks:
+    - name: Verificar que las aplicaciones React están corriendo
+      uri:
+        url: "http://127.0.0.1:{{ item }}"
+        method: GET
+      register: app_check
+      failed_when: false
+      loop:
+        - 3000 # Corporativa
+        - 3001 # Eyenga
+
+    - name: Mostrar estado de aplicaciones
+      debug:
+        msg: "App en puerto {{ item.item }}: {{ 'OK' if item.status == 200 else 'No disponible' }}"
+      loop: "{{ app_check.results }}"
+
+    - name: Fallar si las aplicaciones no están disponibles
+      fail:
+        msg: "Las aplicaciones React deben estar corriendo antes de configurar SSL"
+      when: app_check.results | selectattr('status', 'ne', 200) | list | length > 0
+
+  tasks:
+    - name: Instalar Certbot y dependencias
+      apt:
+        name:
+          - certbot
+          - python3-certbot-nginx
+          - openssl
+        state: present
+        update_cache: yes
+
+    - name: Crear certificado autofirmado para acceso por IP
+      shell: |
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /etc/ssl/private/nginx-selfsigned.key \
+        -out /etc/ssl/certs/nginx-selfsigned.crt \
+        -subj "/C=ES/ST=Madrid/L=Madrid/O=Executive Service Business/CN={{ ansible_default_ipv4.address }}"
+      args:
+        creates: /etc/ssl/certs/nginx-selfsigned.crt
+
+    - name: Verificar resolución DNS de dominios
+      shell: "dig +short {{ item }} @8.8.8.8"
+      register: dns_resolution
+      loop:
+        - "{{ corporativa_domain }}"
+        - "{{ eyenga_domain }}"
+
+    - name: Mostrar resolución DNS
+      debug:
+        msg: "{{ item.item }}: {{ item.stdout if item.stdout else 'No resuelve' }}"
+      loop: "{{ dns_resolution.results }}"
+
+    - name: Verificar que los dominios apuntan a este servidor
+      fail:
+        msg: "El dominio {{ item.item }} no apunta a {{ ansible_default_ipv4.address }}"
+      when: item.stdout != ansible_default_ipv4.address
+      loop: "{{ dns_resolution.results }}"
+
+    - name: Crear configuración temporal Nginx para validación SSL
+      template:
+        src: ../roles/nginx/templates/nginx-pre-ssl.conf.j2
+        dest: /etc/nginx/sites-available/pre-ssl
+        backup: yes
+
+    - name: Crear configuración Nginx para validación (sin SSL)
+      copy:
+        content: |
+          server {
+              listen 80;
+              server_name {{ corporativa_domain }};
+              
+              location /.well-known/acme-challenge/ {
+                  root /var/www/html;
+              }
+              
+              location / {
+                  proxy_pass http://127.0.0.1:3000;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+          server {
+              listen 80;
+              server_name {{ eyenga_domain }};
+              
+              location /.well-known/acme-challenge/ {
+                  root /var/www/html;
+              }
+              
+              location / {
+                  proxy_pass http://127.0.0.1:3001;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+        dest: /etc/nginx/sites-available/pre-ssl
+
+    - name: Activar configuración temporal
+      file:
+        src: /etc/nginx/sites-available/pre-ssl
+        dest: /etc/nginx/sites-enabled/pre-ssl
+        state: link
+
+    - name: Crear directorio para validación SSL
+      file:
+        path: /var/www/html
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+
+    - name: Recargar Nginx con configuración temporal
+      systemd:
+        name: nginx
+        state: reloaded
+
+    - name: Obtener certificados SSL para cada dominio
+      command: >
+        certbot certonly
+        --webroot
+        -w /var/www/html
+        -d {{ item }}
+        --non-interactive
+        --agree-tos
+        --email {{ letsencrypt_email }}
+      register: certbot_result
+      loop:
+        - "{{ corporativa_domain }}"
+        - "{{ eyenga_domain }}"
+
+    - name: Mostrar resultado de Certbot
+      debug:
+        msg: "Certificado para {{ item.item }}: {{ 'Obtenido' if item.rc == 0 else 'Error' }}"
+      loop: "{{ certbot_result.results }}"
+
+    - name: Eliminar configuración temporal
+      file:
+        path: /etc/nginx/sites-enabled/pre-ssl
+        state: absent
+
+    - name: Restaurar configuración Nginx con SSL
+      template:
+        src: ../roles/nginx/templates/nginx-sites.conf.j2
+        dest: /etc/nginx/sites-available/webapp
+        backup: yes
+      notify: restart nginx
+
+    - name: Activar configuración con SSL
+      file:
+        src: /etc/nginx/sites-available/webapp
+        dest: /etc/nginx/sites-enabled/webapp
+        state: link
+
+    - name: Configurar renovación automática con systemd timer (más robusto que cron)
+      copy:
+        content: |
+          [Unit]
+          Description=Renovar certificados SSL de Let's Encrypt
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/certbot renew --quiet --post-hook "/usr/local/bin/ssl-renewal-hook.sh"
+          User=root
+        dest: /etc/systemd/system/certbot-renewal.service
+
+    - name: Crear timer systemd para renovación automática
+      copy:
+        content: |
+          [Unit]
+          Description=Timer para renovación de certificados SSL
+          Requires=certbot-renewal.service
+
+          [Timer]
+          OnCalendar=*-*-* 06,18:00
+          RandomizedDelaySec=3600
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+        dest: /etc/systemd/system/certbot-renewal.timer
+
+    - name: Crear configuración adicional cron como respaldo
+      cron:
+        name: "Renovar certificados SSL (backup)"
+        minute: "30"
+        hour: "2"
+        job: "/usr/bin/certbot renew --quiet --post-hook '/usr/local/bin/ssl-renewal-hook.sh' >> /var/log/certbot-renewal.log 2>&1"
+        user: root
+
+    - name: Crear script de verificación de certificados
+      copy:
+        content: |
+          #!/bin/bash
+          # Script de verificación de certificados SSL
+          # Generado por Ansible
+
+          LOG_FILE="/var/log/ssl-check.log"
+          EMAIL="{{ letsencrypt_email }}"
+
+          log_message() {
+              echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+          }
+
+          check_certificate_expiry() {
+              local domain=$1
+              local cert_file="/etc/letsencrypt/live/$domain/cert.pem"
+              
+              if [ ! -f "$cert_file" ]; then
+                  log_message "ERROR: Certificado no encontrado para $domain"
+                  return 1
+              fi
+              
+              local expiry_date=$(openssl x509 -enddate -noout -in "$cert_file" | cut -d= -f2)
+              local expiry_epoch=$(date -d "$expiry_date" +%s)
+              local current_epoch=$(date +%s)
+              local days_until_expiry=$(( (expiry_epoch - current_epoch) / 86400 ))
+              
+              log_message "Certificado $domain expira en $days_until_expiry días"
+              
+              if [ $days_until_expiry -lt 30 ]; then
+                  log_message "WARNING: Certificado $domain expira en menos de 30 días"
+                  return 2
+              elif [ $days_until_expiry -lt 7 ]; then
+                  log_message "CRITICAL: Certificado $domain expira en menos de 7 días"
+                  return 3
+              fi
+              
+              return 0
+          }
+
+          # Verificar certificados
+          log_message "=== Verificación de certificados SSL ==="
+
+          domains=("{{ corporativa_domain }}" "{{ eyenga_domain }}")
+          exit_code=0
+
+          for domain in "${domains[@]}"; do
+              check_certificate_expiry "$domain"
+              result=$?
+              if [ $result -gt $exit_code ]; then
+                  exit_code=$result
+              fi
+          done
+
+          # Test de conectividad SSL
+          for domain in "${domains[@]}"; do
+              if timeout 10 openssl s_client -connect "$domain:443" -servername "$domain" </dev/null 2>/dev/null | grep -q "Verify return code: 0"; then
+                  log_message "SSL test OK para $domain"
+              else
+                  log_message "ERROR: SSL test fallido para $domain"
+                  exit_code=4
+              fi
+          done
+
+          log_message "=== Verificación completada (código: $exit_code) ==="
+          exit $exit_code
+        dest: /usr/local/bin/check-ssl-certs.sh
+        mode: "0755"
+
+    - name: Crear cron job para verificación diaria de certificados
+      cron:
+        name: "Verificar estado de certificados SSL"
+        minute: "0"
+        hour: "8"
+        job: "/usr/local/bin/check-ssl-certs.sh"
+        user: root
+
+    - name: Recargar systemd y habilitar timer de renovación
+      systemd:
+        daemon_reload: yes
+        name: certbot-renewal.timer
+        enabled: yes
+        state: started
+
+    - name: Configurar logrotate para logs de SSL
+      copy:
+        content: |
+          /var/log/certbot-renewal.log /var/log/ssl-check.log {
+              weekly
+              missingok
+              rotate 12
+              compress
+              delaycompress
+              notifempty
+              copytruncate
+          }
+        dest: /etc/logrotate.d/ssl-certs
+
+    - name: Test de renovación automática (dry-run)
+      command: certbot renew --dry-run
+      register: renewal_test
+      failed_when: false
+
+    - name: Verificar que el timer systemd está activo
+      command: systemctl is-active certbot-renewal.timer
+      register: timer_status
+      failed_when: false
+
+    - name: Mostrar resultado del test de renovación
+      debug:
+        msg:
+          - "Test de renovación: {{ 'OK ✅' if renewal_test.rc == 0 else 'Error ❌ - revisar configuración' }}"
+          - "Timer systemd: {{ 'Activo ✅' if timer_status.stdout == 'active' else 'Inactivo ❌' }}"
+          - ""
+          - "📅 Programación de renovación:"
+          - "   • Systemd timer: Cada día a las 06:00 y 18:00 (con delay aleatorio)"
+          - "   • Cron backup: Cada día a las 02:30"
+          - "   • Verificación: Cada día a las 08:00"
+
+    - name: Reiniciar Nginx con configuración SSL final
+      systemd:
+        name: nginx
+        state: restarted
+
+    - name: Esperar que Nginx esté listo
+      wait_for:
+        port: 443
+        delay: 2
+
+    - name: Verificar configuración SSL
+      uri:
+        url: "https://{{ item }}"
+        method: GET
+        validate_certs: yes
+        follow_redirects: yes
+      register: ssl_check
+      failed_when: false
+      loop:
+        - "{{ corporativa_domain }}"
+        - "{{ eyenga_domain }}"
+
+    - name: Mostrar resumen final
+      debug:
+        msg:
+          - "🔒 Configuración SSL completada:"
+          - "   • {{ corporativa_domain }}: {{ 'HTTPS ✅' if ssl_check.results[0].status == 200 else 'Error ❌' }}"
+          - "   • {{ eyenga_domain }}: {{ 'HTTPS ✅' if ssl_check.results[1].status == 200 else 'Error ❌' }}"
+          - ""
+          - "� Renovación automática configurada:"
+          - "   • Systemd timer: 2 veces al día (06:00 y 18:00)"
+          - "   • Cron backup: 1 vez al día (02:30)"
+          - "   • Verificación diaria: 08:00"
+          - "   • Logs: /var/log/certbot-renewal.log, /var/log/ssl-check.log"
+          - ""
+          - "�📋 Información importante:"
+          - "   • Los certificados Let's Encrypt expiran cada 90 días"
+          - "   • La renovación se intenta cuando faltan menos de 30 días"
+          - "   • El tráfico HTTP se redirige automáticamente a HTTPS"
+          - "   • Nginx se recarga automáticamente tras renovar certificados"
+          - ""
+          - "🛠️ Comandos útiles en el servidor:"
+          - "   • Ver estado timer: systemctl status certbot-renewal.timer"
+          - "   • Ver logs renovación: tail -f /var/log/certbot-renewal.log"
+          - "   • Verificar certificados: /usr/local/bin/check-ssl-certs.sh"
+          - "   • Test renovación manual: certbot renew --dry-run"
+          - ""
+          - "🌐 URLs de acceso:"
+          - "   • https://{{ corporativa_domain }}"
+          - "   • https://{{ eyenga_domain }}"
+
+  handlers:
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted

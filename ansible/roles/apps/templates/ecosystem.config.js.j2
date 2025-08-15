@@ -1,0 +1,42 @@
+module.exports = {
+  apps: [
+    {
+      name: 'corporativa',
+      script: 'serve',
+      args: '-s build -l 3000',
+      cwd: '{{ app_directory }}/apps/corporativa',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000,
+        HOST: '127.0.0.1'
+      },
+      error_file: '/var/log/pm2/corporativa-error.log',
+      out_file: '/var/log/pm2/corporativa-out.log',
+      log_file: '/var/log/pm2/corporativa.log',
+      time: true
+    },
+    {
+      name: 'eyenga',
+      script: 'serve',
+      args: '-s build -l 3001',
+      cwd: '{{ app_directory }}/apps/eyenga',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3001,
+        HOST: '127.0.0.1'
+      },
+      error_file: '/var/log/pm2/eyenga-error.log',
+      out_file: '/var/log/pm2/eyenga-out.log',
+      log_file: '/var/log/pm2/eyenga.log',
+      time: true
+    }
+  ]
+};

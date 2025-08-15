@@ -1,0 +1,81 @@
+#!/bin/bash
+# Hook post-renovación SSL para Executive Service Business
+# Se ejecuta automáticamente después de renovar certificados
+
+LOG_FILE="/var/log/ssl-renewal-hook.log"
+
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
+log_message "=== Inicio hook post-renovación SSL ==="
+
+# Verificar que los certificados se renovaron correctamente
+DOMAINS=("{{ corporativa_domain }}" "{{ eyenga_domain }}")
+SUCCESS=true
+
+for domain in "${DOMAINS[@]}"; do
+    cert_file="/etc/letsencrypt/live/$domain/cert.pem"
+    if [ -f "$cert_file" ]; then
+        expiry_date=$(openssl x509 -enddate -noout -in "$cert_file" | cut -d= -f2)
+        expiry_epoch=$(date -d "$expiry_date" +%s)
+        current_epoch=$(date +%s)
+        days_until_expiry=$(( (expiry_epoch - current_epoch) / 86400 ))
+        
+        log_message "Certificado $domain: válido por $days_until_expiry días más"
+        
+        if [ $days_until_expiry -lt 7 ]; then
+            log_message "WARNING: Certificado $domain aún está próximo a expirar"
+            SUCCESS=false
+        fi
+    else
+        log_message "ERROR: Certificado no encontrado para $domain"
+        SUCCESS=false
+    fi
+done
+
+# Verificar configuración de Nginx
+if nginx -t >/dev/null 2>&1; then
+    log_message "Configuración de Nginx: OK"
+else
+    log_message "ERROR: Configuración de Nginx inválida"
+    SUCCESS=false
+fi
+
+# Recargar Nginx
+if systemctl reload nginx; then
+    log_message "Nginx recargado correctamente"
+else
+    log_message "ERROR: Fallo al recargar Nginx"
+    SUCCESS=false
+fi
+
+# Verificar que las aplicaciones React siguen funcionando
+for port in 3000 3001; do
+    if curl -s "http://127.0.0.1:$port" >/dev/null; then
+        log_message "Aplicación en puerto $port: OK"
+    else
+        log_message "WARNING: Aplicación en puerto $port no responde"
+        SUCCESS=false
+    fi
+done
+
+# Verificar conectividad HTTPS externa
+sleep 5  # Esperar que Nginx se estabilice
+
+for domain in "${DOMAINS[@]}"; do
+    if curl -s -I "https://$domain" >/dev/null 2>&1; then
+        log_message "HTTPS test $domain: OK"
+    else
+        log_message "WARNING: HTTPS test $domain falló"
+        SUCCESS=false
+    fi
+done
+
+if [ "$SUCCESS" = true ]; then
+    log_message "=== Hook post-renovación completado exitosamente ==="
+    exit 0
+else
+    log_message "=== Hook post-renovación completado con errores ==="
+    exit 1
+fi

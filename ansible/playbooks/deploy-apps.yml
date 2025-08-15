@@ -1,0 +1,137 @@
+---
+# Playbook principal para desplegar Executive Service Business
+# Este playbook configura DuckDNS, Nginx y despliega las aplicaciones React
+
+- name: Desplegar Executive Service Business en Oracle Cloud
+  hosts: esb_vms
+  become: yes
+  gather_facts: yes
+
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  pre_tasks:
+    - name: Actualizar cache de apt
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Instalar paquetes base requeridos
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - ufw
+        state: present
+
+    - name: Configurar firewall UFW
+      ufw:
+        rule: "{{ item.rule }}"
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+        comment: "{{ item.comment }}"
+        src: "{{ item.from | default(omit) }}"
+      loop: "{{ firewall_rules }}"
+
+    - name: Configurar reglas específicas para puertos internos
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+        src: 127.0.0.1
+        comment: "React app internal"
+      loop:
+        - 3000 # Corporativa
+        - 3001 # Eyenga
+
+    - name: Habilitar firewall UFW
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+    - name: Mostrar información del sistema
+      debug:
+        msg:
+          - "Hostname: {{ ansible_hostname }}"
+          - "IP Address: {{ ansible_default_ipv4.address }}"
+          - "Operating System: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Architecture: {{ ansible_architecture }}"
+          - "Memory: {{ ansible_memtotal_mb }}MB"
+          - "CPU Cores: {{ ansible_processor_vcpus }}"
+
+  roles:
+    - role: duckdns
+      tags: ["duckdns", "dns"]
+
+    - role: nginx
+      tags: ["nginx", "webserver"]
+
+    - role: apps
+      tags: ["apps", "react", "deployment"]
+
+  post_tasks:
+    - name: Verificar que las aplicaciones React están corriendo
+      uri:
+        url: "http://127.0.0.1:{{ item }}"
+        method: GET
+      register: app_status
+      failed_when: false
+      loop:
+        - 3000 # Corporativa
+        - 3001 # Eyenga
+
+    - name: Verificar que Nginx está funcionando
+      uri:
+        url: "https://{{ ansible_default_ipv4.address }}/status"
+        method: GET
+        validate_certs: false
+      register: nginx_status
+      failed_when: false
+
+    - name: Mostrar estado de aplicaciones React
+      debug:
+        msg: "App en puerto {{ item.item }}: {{ 'OK ✅' if item.status == 200 else 'Error ❌' }}"
+      loop: "{{ app_status.results }}"
+
+    - name: Mostrar estado de Nginx
+      debug:
+        msg: "Nginx status: {{ 'OK ✅' if nginx_status.status == 200 else 'Error ❌' }}"
+
+    - name: Verificar PM2 está corriendo
+      shell: pm2 list --silent
+      register: pm2_list
+      become_user: "{{ app_user }}"
+      failed_when: false
+
+    - name: Mostrar resumen del deployment
+      debug:
+        msg:
+          - "🎉 Deployment completado exitosamente!"
+          - ""
+          - "🌐 URLs de acceso (después de configurar SSL):"
+          - "   • Portal Corporativo: https://{{ corporativa_domain }}"
+          - "   • Proyecto Eyenga: https://{{ eyenga_domain }}"
+          - "   • Por IP (HTTPS): https://{{ ansible_default_ipv4.address }}"
+          - ""
+          - "🔧 Comandos útiles en el servidor:"
+          - "   • Gestionar apps: /home/{{ app_user }}/manage-apps.sh"
+          - "   • Actualizar apps: /home/{{ app_user }}/update-apps.sh"
+          - "   • Ver logs DuckDNS: tail -f {{ duckdns_log_file }}"
+          - "   • Ver logs PM2: pm2 logs"
+          - ""
+          - "📊 Estado de servicios:"
+          - "   • DuckDNS: Actualización automática cada {{ duckdns_update_interval }} minutos"
+          - "   • Nginx: Proxy reverso a puertos 3000 y 3001"
+          - "   • PM2: Gestión de procesos React"
+          - "   • Firewall: Solo puertos 22 (SSH) y 443 (HTTPS) abiertos"
+          - ""
+          - "⚠️  Próximos pasos:"
+          - "   1. Ejecutar: ansible-playbook -i inventory/hosts.yml playbooks/setup-ssl.yml"
+          - "   2. Verificar dominios DuckDNS apuntan a {{ ansible_default_ipv4.address }}"

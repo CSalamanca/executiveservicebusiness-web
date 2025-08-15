@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Service Business</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+        
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .app-card {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .app-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .app-description {
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .status {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .status-item {
+            margin: 5px 0;
+        }
+        
+        .status-ok {
+            color: #4ade80;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .apps-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">Executive Service Business</div>
+        <div class="subtitle">Plataforma de Aplicaciones Empresariales</div>
+        
+        <div class="apps-grid">
+            <a href="/corporativa" class="app-card">
+                <div class="app-title">🏢 Portal Corporativo</div>
+                <div class="app-description">
+                    Accede al sitio web corporativo de Executive Service Business. 
+                    Información empresarial, servicios y contacto.
+                </div>
+            </a>
+            
+            <a href="/eyenga" class="app-card">
+                <div class="app-title">🌱 Proyecto Eyenga</div>
+                <div class="app-description">
+                    Plataforma educativa para agricultura sostenible. 
+                    Campus en Congo-Brazzaville y Madrid.
+                </div>
+            </a>
+        </div>
+        
+        <div class="status">
+            <h3>Estado del Sistema</h3>
+            <div class="status-item">🌐 <strong>Dominios:</strong></div>
+            <div class="status-item">• {{ corporativa_domain }} <span class="status-ok">✓</span></div>
+            <div class="status-item">• {{ eyenga_domain }} <span class="status-ok">✓</span></div>
+            <div class="status-item">🚀 <strong>Servidor:</strong> Oracle Cloud ARM ({{ ansible_host }}) <span class="status-ok">✓</span></div>
+            <div class="status-item">📦 <strong>Última actualización:</strong> {{ ansible_date_time.date }} {{ ansible_date_time.time }}</div>
+        </div>
+    </div>
+</body>
+</html>

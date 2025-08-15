@@ -1,0 +1,41 @@
+---
+# Variables globales para Executive Service Business
+
+# Configuración de aplicaciones React (modo proxy)
+apps:
+  corporativa:
+    name: corporativa
+    domain: "{{ corporativa_domain }}"
+    port: 3000
+    build_path: "{{ app_directory }}/apps/corporativa/build"
+
+  eyenga:
+    name: eyenga
+    domain: "{{ eyenga_domain }}"
+    port: 3001
+    build_path: "{{ app_directory }}/apps/eyenga/build"
+
+# Configuración Node.js
+nodejs_version: "20"
+
+# Configuración Nginx
+nginx_worker_processes: auto
+nginx_worker_connections: 1024
+nginx_client_max_body_size: 64M
+
+# Configuración DuckDNS
+duckdns_update_interval: 30 # minutos
+duckdns_log_file: /var/log/duckdns.log
+
+# Configuración de firewall - Solo puertos necesarios
+firewall_rules:
+  - { port: 22, proto: tcp, rule: allow, comment: "SSH" }
+  - { port: 443, proto: tcp, rule: allow, comment: "HTTPS" }
+
+# Configuración de monitoreo
+enable_monitoring: true
+log_rotation_days: 30
+
+# Configuración de backup
+backup_enabled: true
+backup_retention_days: 7

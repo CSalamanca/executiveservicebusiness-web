@@ -1,0 +1,45 @@
+#!/bin/bash
+# Script de actualización rápida de aplicaciones
+# Generado automáticamente por Ansible
+
+set -e
+
+echo "� Actualizando aplicaciones Executive Service Business..."
+
+cd {{ app_directory }}
+
+# Actualizar código desde Git
+echo "� Actualizando código desde Git..."
+git pull origin {{ git_branch }}
+
+# Instalar dependencias si hay cambios
+echo "📦 Verificando dependencias..."
+npm install
+
+# Actualizar dependencias de las aplicaciones
+cd apps/corporativa
+npm install
+cd ../eyenga
+npm install
+cd ../..
+
+# Compilar aplicaciones
+echo "🏗️  Compilando aplicaciones..."
+cd apps/corporativa
+npm run build
+cd ../eyenga
+npm run build
+cd ../..
+
+# Reiniciar aplicaciones con PM2
+echo "🔄 Reiniciando aplicaciones..."
+pm2 restart all
+
+echo "✅ Actualización completada!"
+echo ""
+echo "🌐 URLs de acceso:"
+echo "   • https://{{ corporativa_domain }}"
+echo "   • https://{{ eyenga_domain }}"
+echo ""
+echo "📊 Estado de aplicaciones:"
+pm2 list

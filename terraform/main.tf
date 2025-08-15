@@ -73,7 +73,7 @@ resource "oci_core_route_table" "ebs_rt" {
   }
 }
 
-# Security List - Free Tier (solo puertos 22 y 443)
+# Security List - Free Tier (solo puertos 22 SSH y 443 HTTPS)
 resource "oci_core_security_list" "ebs_security_list" {
   compartment_id = var.tenancy_ocid
   vcn_id         = oci_core_vcn.ebs_vcn.id
@@ -85,7 +85,7 @@ resource "oci_core_security_list" "ebs_security_list" {
     protocol    = "all"
   }
 
-  # SSH (puerto 22) - REQUERIDO
+  # SSH (puerto 22) - REQUERIDO para administración
   ingress_security_rules {
     protocol = "6"
     source   = "0.0.0.0/0"
@@ -96,7 +96,7 @@ resource "oci_core_security_list" "ebs_security_list" {
     description = "SSH access"
   }
 
-  # HTTPS (puerto 443) - REQUERIDO
+  # HTTPS (puerto 443) - REQUERIDO para aplicaciones web
   ingress_security_rules {
     protocol = "6"
     source   = "0.0.0.0/0"
@@ -104,7 +104,7 @@ resource "oci_core_security_list" "ebs_security_list" {
       min = 443
       max = 443
     }
-    description = "HTTPS access"
+    description = "HTTPS access - Nginx proxy to apps"
   }
 
   # Ping (ICMP) - Para diagnósticos
@@ -115,7 +115,7 @@ resource "oci_core_security_list" "ebs_security_list" {
       type = 3
       code = 4
     }
-    description = "ICMP"
+    description = "ICMP for diagnostics"
   }
   
   freeform_tags = {

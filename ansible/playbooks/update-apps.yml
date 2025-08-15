@@ -1,0 +1,121 @@
+---
+# Playbook para solo actualizar las aplicaciones (sin reconfigurar infraestructura)
+
+- name: Actualizar aplicaciones React
+  hosts: esb_vms
+  become: yes
+  gather_facts: yes
+
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Actualizar código desde Git
+      git:
+        repo: "{{ git_repo }}"
+        dest: "{{ app_directory }}"
+        version: "{{ git_branch }}"
+        force: yes
+      become_user: "{{ app_user }}"
+
+    - name: Instalar dependencias del workspace
+      npm:
+        path: "{{ app_directory }}"
+        state: present
+      become_user: "{{ app_user }}"
+
+    - name: Instalar dependencias de Corporativa
+      npm:
+        path: "{{ app_directory }}/apps/corporativa"
+        state: present
+      become_user: "{{ app_user }}"
+
+    - name: Instalar dependencias de Eyenga
+      npm:
+        path: "{{ app_directory }}/apps/eyenga"
+        state: present
+      become_user: "{{ app_user }}"
+
+    - name: Compilar aplicación Corporativa
+      command: npm run build
+      args:
+        chdir: "{{ app_directory }}/apps/corporativa"
+      become_user: "{{ app_user }}"
+
+    - name: Compilar aplicación Eyenga
+      command: npm run build
+      args:
+        chdir: "{{ app_directory }}/apps/eyenga"
+      become_user: "{{ app_user }}"
+
+    - name: Crear backup de aplicaciones actuales
+      archive:
+        path:
+          - "{{ apps.corporativa.path }}"
+          - "{{ apps.eyenga.path }}"
+        dest: "/home/{{ app_user }}/backup-apps-{{ ansible_date_time.epoch }}.tar.gz"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+      ignore_errors: yes
+
+    - name: Limpiar directorios web
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ apps.corporativa.path }}"
+        - "{{ apps.eyenga.path }}"
+
+    - name: Recrear directorios web
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+      loop:
+        - "{{ apps.corporativa.path }}"
+        - "{{ apps.eyenga.path }}"
+
+    - name: Copiar nueva versión de Corporativa
+      copy:
+        src: "{{ apps.corporativa.build_path }}/"
+        dest: "{{ apps.corporativa.path }}/"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+        remote_src: yes
+
+    - name: Copiar nueva versión de Eyenga
+      copy:
+        src: "{{ apps.eyenga.build_path }}/"
+        dest: "{{ apps.eyenga.path }}/"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+        remote_src: yes
+
+    - name: Recargar Nginx
+      systemd:
+        name: nginx
+        state: reloaded
+
+    - name: Verificar que las aplicaciones cargan
+      uri:
+        url: "http://{{ ansible_default_ipv4.address }}/{{ item }}"
+        method: GET
+      register: app_check
+      failed_when: false
+      loop:
+        - corporativa
+        - eyenga
+
+    - name: Mostrar resultado de la actualización
+      debug:
+        msg:
+          - "✅ Actualización completada!"
+          - "🌐 Aplicaciones actualizadas:"
+          - "   • Corporativa: {{ 'OK' if app_check.results[0].status == 200 else 'ERROR' }}"
+          - "   • Eyenga: {{ 'OK' if app_check.results[1].status == 200 else 'ERROR' }}"
+          - ""
+          - "📅 Backup creado: backup-apps-{{ ansible_date_time.epoch }}.tar.gz"

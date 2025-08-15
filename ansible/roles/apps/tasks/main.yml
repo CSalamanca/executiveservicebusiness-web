@@ -1,0 +1,198 @@
+---
+# Tareas para desplegar las aplicaciones React como servicios
+
+- name: Instalar Node.js 20 LTS
+  shell: |
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    apt-get install -y nodejs
+  become: yes
+  args:
+    creates: /usr/bin/node
+
+- name: Verificar versión de Node.js
+  command: node --version
+  register: node_version
+  changed_when: false
+
+- name: Mostrar versión de Node.js
+  debug:
+    msg: "Node.js version: {{ node_version.stdout }}"
+
+- name: Verificar versión de npm
+  command: npm --version
+  register: npm_version
+  changed_when: false
+
+- name: Mostrar versión de npm
+  debug:
+    msg: "npm version: {{ npm_version.stdout }}"
+
+- name: Instalar PM2 y serve globalmente para gestión de procesos
+  npm:
+    name: "{{ item }}"
+    global: yes
+    state: present
+  become: yes
+  loop:
+    - pm2
+    - serve
+
+- name: Crear directorio para logs de PM2
+  file:
+    path: /var/log/pm2
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Clonar o actualizar repositorio Git
+  git:
+    repo: "{{ git_repo }}"
+    dest: "{{ app_directory }}"
+    version: "{{ git_branch }}"
+    force: yes
+  become_user: "{{ app_user }}"
+
+- name: Instalar dependencias del workspace principal
+  npm:
+    path: "{{ app_directory }}"
+    state: present
+  become_user: "{{ app_user }}"
+
+- name: Instalar dependencias de la aplicación Corporativa
+  npm:
+    path: "{{ app_directory }}/apps/corporativa"
+    state: present
+  become_user: "{{ app_user }}"
+
+- name: Instalar dependencias de la aplicación Eyenga
+  npm:
+    path: "{{ app_directory }}/apps/eyenga"
+    state: present
+  become_user: "{{ app_user }}"
+
+- name: Crear archivo de configuración PM2 para aplicaciones
+  template:
+    src: ecosystem.config.js.j2
+    dest: "{{ app_directory }}/ecosystem.config.js"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0644"
+  become_user: "{{ app_user }}"
+
+- name: Verificar si PM2 está corriendo aplicaciones
+  shell: pm2 list --silent
+  register: pm2_list
+  become_user: "{{ app_user }}"
+  failed_when: false
+  changed_when: false
+
+- name: Detener aplicaciones PM2 existentes
+  shell: pm2 delete all
+  become_user: "{{ app_user }}"
+  failed_when: false
+  when: pm2_list.stdout is defined and 'online' in pm2_list.stdout
+
+- name: Crear archivos de entorno para producción
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0644"
+  become_user: "{{ app_user }}"
+  loop:
+    - {
+        src: "env.corporativa.j2",
+        dest: "{{ app_directory }}/apps/corporativa/.env.production",
+      }
+    - {
+        src: "env.eyenga.j2",
+        dest: "{{ app_directory }}/apps/eyenga/.env.production",
+      }
+
+- name: Compilar aplicaciones para producción
+  shell: |
+    cd {{ app_directory }}/apps/{{ item }}
+    npm run build
+  become_user: "{{ app_user }}"
+  loop:
+    - corporativa
+    - eyenga
+  register: build_results
+
+- name: Mostrar resultados de build
+  debug:
+    msg: "Build {{ item.item }}: {{ 'Success' if item.rc == 0 else 'Failed' }}"
+  loop: "{{ build_results.results }}"
+
+- name: Iniciar aplicaciones con PM2
+  shell: |
+    cd {{ app_directory }}
+    pm2 start ecosystem.config.js
+  become_user: "{{ app_user }}"
+  register: pm2_start
+
+- name: Mostrar estado de PM2
+  debug:
+    msg: "PM2 start result: {{ pm2_start.stdout }}"
+
+- name: Configurar PM2 para inicio automático
+  shell: |
+    pm2 startup systemd -u {{ app_user }} --hp /home/{{ app_user }}
+    pm2 save
+  become: yes
+  register: pm2_startup
+
+- name: Verificar estado de las aplicaciones
+  shell: pm2 list
+  become_user: "{{ app_user }}"
+  register: pm2_status
+  changed_when: false
+
+- name: Mostrar estado de aplicaciones PM2
+  debug:
+    msg: "{{ pm2_status.stdout_lines }}"
+
+- name: Crear script de gestión de aplicaciones
+  template:
+    src: manage-apps.sh.j2
+    dest: /home/{{ app_user }}/manage-apps.sh
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Crear script de actualización rápida
+  template:
+    src: update-apps.sh.j2
+    dest: /home/{{ app_user }}/update-apps.sh
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Esperar que las aplicaciones estén listas
+  wait_for:
+    port: "{{ item }}"
+    host: 127.0.0.1
+    delay: 5
+    timeout: 60
+  loop:
+    - 3000 # Corporativa
+    - 3001 # Eyenga
+  register: app_ready
+
+- name: Verificar conectividad a aplicaciones
+  uri:
+    url: "http://127.0.0.1:{{ item }}"
+    method: GET
+    status_code: 200
+  loop:
+    - 3000 # Corporativa
+    - 3001 # Eyenga
+  register: app_health
+  failed_when: false
+
+- name: Mostrar estado de conectividad
+  debug:
+    msg: "App on port {{ item.item }}: {{ 'OK' if item.status == 200 else 'Failed' }}"
+  loop: "{{ app_health.results }}"

@@ -1,0 +1,71 @@
+---
+# Tareas para configurar DuckDNS
+
+- name: Crear directorio para DuckDNS
+  file:
+    path: /home/{{ app_user }}/duckdns
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Crear directorio para logs DuckDNS
+  file:
+    path: /var/log
+    state: directory
+    mode: "0755"
+
+- name: Crear script de actualización DuckDNS
+  template:
+    src: duckdns-update.sh.j2
+    dest: /home/{{ app_user }}/duckdns/update.sh
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Crear script de actualización para root
+  template:
+    src: duckdns-update.sh.j2
+    dest: /root/duckdns-update.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configurar cron job para DuckDNS (cada 30 minutos)
+  cron:
+    name: "DuckDNS Update - {{ item.name }}"
+    minute: "*/{{ duckdns_update_interval }}"
+    job: "/root/duckdns-update.sh {{ item.name }} {{ item.token }} >> {{ duckdns_log_file }} 2>&1"
+    user: root
+    state: present
+  loop: "{{ duckdns_domains }}"
+
+- name: Crear logrotate para DuckDNS
+  copy:
+    content: |
+      {{ duckdns_log_file }} {
+          daily
+          rotate {{ log_rotation_days }}
+          compress
+          delaycompress
+          missingok
+          notifempty
+          create 644 root root
+      }
+    dest: /etc/logrotate.d/duckdns
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ejecutar actualización inicial de DuckDNS
+  shell: |
+    /root/duckdns-update.sh {{ item.name }} {{ item.token }}
+  loop: "{{ duckdns_domains }}"
+  register: duckdns_initial_update
+  changed_when: true
+
+- name: Mostrar resultado de actualización DuckDNS
+  debug:
+    msg: "DuckDNS actualizado para {{ item.item.name }}: {{ item.stdout }}"
+  loop: "{{ duckdns_initial_update.results }}"
+  when: item.stdout is defined

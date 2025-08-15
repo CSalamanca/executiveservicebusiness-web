@@ -1,0 +1,110 @@
+---
+# Tareas para configurar Nginx
+
+- name: Instalar Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Asegurar que Nginx esté iniciado y habilitado
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Crear directorios web necesarios
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+  loop:
+    - "{{ web_root }}/html" # Solo para página de índice y validación SSL
+
+- name: Crear configuración de Nginx para las aplicaciones
+  template:
+    src: nginx-sites.conf.j2
+    dest: "{{ nginx_sites_available }}/executiveservicebusiness"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart nginx
+
+- name: Deshabilitar sitio por defecto de Nginx
+  file:
+    path: "{{ nginx_sites_enabled }}/default"
+    state: absent
+  notify: restart nginx
+
+- name: Habilitar sitio de Executive Service Business
+  file:
+    src: "{{ nginx_sites_available }}/executiveservicebusiness"
+    dest: "{{ nginx_sites_enabled }}/executiveservicebusiness"
+    state: link
+  notify: restart nginx
+
+- name: Crear página de índice principal
+  template:
+    src: index.html.j2
+    dest: "{{ web_root }}/html/index.html"
+    owner: www-data
+    group: www-data
+    mode: "0644"
+
+- name: Crear hook post-renovación SSL
+  template:
+    src: ssl-renewal-hook.sh.j2
+    dest: /usr/local/bin/ssl-renewal-hook.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configurar logrotate para Nginx
+  copy:
+    content: |
+      /var/log/nginx/*.log {
+          daily
+          missingok
+          rotate 52
+          compress
+          delaycompress
+          notifempty
+          create 644 www-data adm
+          postrotate
+              if [ -f /var/run/nginx.pid ]; then
+                  kill -USR1 `cat /var/run/nginx.pid`
+              fi
+          endscript
+      }
+    dest: /etc/logrotate.d/nginx
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Configurar logrotate para logs SSL
+  copy:
+    content: |
+      /var/log/ssl-renewal-hook.log {
+          weekly
+          missingok
+          rotate 12
+          compress
+          delaycompress
+          notifempty
+          copytruncate
+      }
+    dest: /etc/logrotate.d/ssl-hooks
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Verificar configuración de Nginx
+  command: nginx -t
+  register: nginx_test
+  changed_when: false
+
+- name: Mostrar resultado de verificación de Nginx
+  debug:
+    msg: "Configuración de Nginx: {{ nginx_test.stderr }}"

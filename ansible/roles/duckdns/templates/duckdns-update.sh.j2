@@ -1,0 +1,32 @@
+#!/bin/bash
+# Script de actualización DuckDNS para {{ ansible_hostname }}
+# Generado automáticamente por Ansible
+
+DOMAIN="$1"
+TOKEN="$2"
+
+if [ -z "$DOMAIN" ] || [ -z "$TOKEN" ]; then
+    echo "$(date): ERROR - Uso: $0 <domain> <token>" >&2
+    exit 1
+fi
+
+# Obtener IP pública actual
+CURRENT_IP=$(curl -s ifconfig.me || curl -s ipinfo.io/ip || curl -s icanhazip.com)
+
+if [ -z "$CURRENT_IP" ]; then
+    echo "$(date): ERROR - No se pudo obtener la IP pública" >&2
+    exit 1
+fi
+
+# Actualizar DuckDNS
+echo "$(date): Actualizando DuckDNS para $DOMAIN con IP $CURRENT_IP"
+
+RESPONSE=$(echo "url=https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&ip=$CURRENT_IP" | curl -k -s -K -)
+
+if [ "$RESPONSE" = "OK" ]; then
+    echo "$(date): SUCCESS - DuckDNS actualizado correctamente para $DOMAIN ($CURRENT_IP)"
+    exit 0
+else
+    echo "$(date): ERROR - Falló la actualización de DuckDNS para $DOMAIN. Respuesta: $RESPONSE" >&2
+    exit 1
+fi

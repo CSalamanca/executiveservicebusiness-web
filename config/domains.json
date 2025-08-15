@@ -7,21 +7,21 @@
         "apiUrl": "http://corporativa.local:3001/api"
       },
       "production": {
-        "domain": "TU_DOMINIO_CORPORATIVO.com",
+        "domain": "executiveservicebusiness.duckdns.org",
         "port": 443,
-        "apiUrl": "https://api.TU_DOMINIO_CORPORATIVO.com"
+        "apiUrl": "https://api.executiveservicebusiness.duckdns.org"
       }
     },
     "eyenga": {
       "local": {
-        "domain": "eyenga.local", 
+        "domain": "eyenga.local",
         "port": 3001,
         "apiUrl": "http://eyenga.local:3002/api"
       },
       "production": {
-        "domain": "TU_DOMINIO_EYENGA.com",
+        "domain": "eyenga.duckdns.org",
         "port": 443,
-        "apiUrl": "https://api.TU_DOMINIO_EYENGA.com"
+        "apiUrl": "https://api.eyenga.duckdns.org"
       }
     }
   },

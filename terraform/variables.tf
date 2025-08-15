@@ -56,7 +56,7 @@ variable "instance_memory_gb" {
 variable "boot_volume_size_gb" {
   description = "Tamaño del volumen de arranque en GB (máximo 200GB en Free Tier)"
   type        = number
-  default     = 50
+  default     = 150
   validation {
     condition     = var.boot_volume_size_gb >= 47 && var.boot_volume_size_gb <= 200
     error_message = "Free Tier permite entre 47GB y 200GB de almacenamiento."
@@ -72,13 +72,13 @@ variable "hostname_label" {
 variable "corporativa_domain" {
   description = "Dominio para la aplicación corporativa"
   type        = string
-  default     = "corporativa.executiveservice.com"
+  default     = "executiveservicebusiness.duckdns.org"
 }
 
 variable "eyenga_domain" {
   description = "Dominio para la aplicación Eyenga"
   type        = string
-  default     = "eyenga.executiveservice.com"
+  default     = "eyenga.duckdns.org"
 }
 
 variable "ssh_public_key" {

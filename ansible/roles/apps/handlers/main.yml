@@ -1,0 +1,8 @@
+---
+# Handlers para aplicaciones
+
+- name: restart nginx
+  systemd:
+    name: nginx
+    state: restarted
+  become: yes
