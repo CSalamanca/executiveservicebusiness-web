@@ -1,10 +1,31 @@
-# Getting Started with Create React App
+# 🎯 Aplicación Eyenga
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> Sitio web especializado Eyenga desarrollado en React + TypeScript con diseño responsive
 
-## Available Scripts
+## 📍 Información del Proyecto
 
-In the project directory, you can run:
+| Propiedad         | Valor                   |
+| ----------------- | ----------------------- |
+| **Nombre**        | Eyenga                  |
+| **Puerto**        | 3001                    |
+| **Dominio Local** | eyenga.local            |
+| **Estado**        | ✅ En Desarrollo        |
+| **Framework**     | React 18.x + TypeScript |
+
+## 🚀 Comandos de Desarrollo
+
+### Desde el Workspace Raíz
+
+```bash
+# Iniciar solo esta aplicación
+npm run dev:eyenga
+
+# Construir aplicación
+npm run build:eyenga
+
+# Ejecutar tests
+npm run test:eyenga
+```
 
 ### `npm start`
 

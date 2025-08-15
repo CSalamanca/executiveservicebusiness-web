@@ -3,104 +3,19 @@ import "./App.css";
 import ScrollReveal from "./components/ScrollReveal";
 import ContactModal from "./components/ContactModal";
 
-// Importar imágenes
-import campusImage1 from "./assets/image001.png";
-import campusImage2 from "./assets/image002.jpg";
-import facilityImage2 from "./assets/image005.png";
-import heroImage from "./assets/image010.png";
-import logoIcon from "./assets/image010.png";
-// Importar imágenes específicas de Eyenga
-import laboratorioImage from "./assets/eyenga-laboratorio.png";
-import agriculturaImage from "./assets/eyenga-agricultura_sostenible.png";
-import construccionImage from "./assets/eyenga-construccion_sostenible.png";
-import ganaderiaImage from "./assets/eyenga-ganaderia_sostenible.png";
-
 function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-  const [showUpArrow, setShowUpArrow] = useState(false);
-  const [showDownArrow, setShowDownArrow] = useState(true);
 
   useEffect(() => {
-    let ticking = false;
-
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          const documentHeight = document.documentElement.scrollHeight;
-          const windowHeight = window.innerHeight;
-          const maxScroll = documentHeight - windowHeight;
-
-          // Actualizar si está en la parte superior
-          setIsScrolled(currentScrollY > 100);
-
-          // Lógica para mostrar/ocultar flechas
-          // Flecha hacia arriba: se muestra cuando no estás en el top (con un pequeño margen)
-          setShowUpArrow(currentScrollY > 100);
-
-          // Flecha hacia abajo: se muestra cuando no estás en el bottom (con un pequeño margen)
-          setShowDownArrow(currentScrollY < maxScroll - 100);
-
-          ticking = false;
-        });
-        ticking = true;
-      }
+      setIsScrolled(window.scrollY > 100);
     };
-
-    // Inicializar
-    handleScroll();
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-    setIsMenuOpen(false); // Cerrar menú móvil después de hacer clic
-  };
-
-  const handleScrollUpClick = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
-  const handleScrollDownClick = () => {
-    // Encontrar la siguiente sección visible
-    const sections = ["home", "features", "gallery", "about", "contact"];
-    const currentScrollY = window.scrollY;
-
-    // Encontrar la siguiente sección
-    for (let i = 0; i < sections.length; i++) {
-      const element = document.getElementById(sections[i]);
-      if (element) {
-        const rect = element.getBoundingClientRect();
-        const elementTop = rect.top + currentScrollY;
-
-        if (elementTop > currentScrollY + 100) {
-          element.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-          return;
-        }
-      }
-    }
-
-    // Si no hay siguiente sección, ir al final
-    window.scrollTo({
-      top: document.documentElement.scrollHeight,
-      behavior: "smooth",
-    });
-  };
 
   const features = [
     {
@@ -151,48 +66,42 @@ function App() {
   return (
     <div className="App">
       {/* Navigation */}
-      <nav className={`navbar ${isScrolled ? "navbar-scrolled" : ""}`}>
+      <nav className={`nav ${isScrolled ? "nav-scrolled" : ""}`}>
         <div className="nav-container">
           <div className="nav-logo">
-            <img
-              src={logoIcon}
-              alt="Eyenga Logo"
-              className="logo-icon"
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "50%",
-                objectFit: "cover",
-              }}
-            />
+            <span className="logo-icon">🌾</span>
             <span className="logo-text">Eyenga</span>
           </div>
 
           <div className={`nav-menu ${isMenuOpen ? "nav-menu-active" : ""}`}>
-            <button
+            <a
+              href="#home"
               className="nav-link"
-              onClick={() => scrollToSection("home")}
+              onClick={() => setIsMenuOpen(false)}
             >
               Inicio
-            </button>
-            <button
+            </a>
+            <a
+              href="#features"
               className="nav-link"
-              onClick={() => scrollToSection("features")}
+              onClick={() => setIsMenuOpen(false)}
             >
               Programas
-            </button>
-            <button
+            </a>
+            <a
+              href="#about"
               className="nav-link"
-              onClick={() => scrollToSection("about")}
+              onClick={() => setIsMenuOpen(false)}
             >
               Nosotros
-            </button>
-            <button
+            </a>
+            <a
+              href="#contact"
               className="nav-link"
-              onClick={() => scrollToSection("contact")}
+              onClick={() => setIsMenuOpen(false)}
             >
               Contacto
-            </button>
+            </a>
           </div>
 
           <div
@@ -230,24 +139,20 @@ function App() {
               >
                 Descubre Más
               </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setIsContactModalOpen(true)}
+              >
+                Contactar
+              </button>
             </div>
           </div>
           <div className="hero-image">
             <div className="floating-card">
               <div className="card-content">
-                <img
-                  src={heroImage}
-                  alt="Campus Eyenga"
-                  style={{
-                    width: "100%",
-                    height: "200px",
-                    objectFit: "cover",
-                    borderRadius: "10px",
-                    marginBottom: "1rem",
-                  }}
-                />
-                <h3>Campus Eyenga</h3>
-                <p>Educación de excelencia</p>
+                <div className="card-icon">🏛️</div>
+                <h3>Campus Activo</h3>
+                <p>Formación integral</p>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: "85%" }}></div>
                 </div>
@@ -298,106 +203,6 @@ function App() {
         </div>
       </section>
 
-      {/* Gallery Section */}
-      <section className="gallery">
-        <div className="container">
-          <ScrollReveal>
-            <div className="section-header">
-              <h2 className="section-title">Nuestros Campus</h2>
-              <p className="section-subtitle">
-                Instalaciones modernas en Congo-Brazzaville y Madrid
-              </p>
-            </div>
-          </ScrollReveal>
-
-          <div className="gallery-grid">
-            <ScrollReveal delay={100}>
-              <div className="gallery-item">
-                <img
-                  src={campusImage1}
-                  alt="Campus Congo-Brazzaville"
-                  className="gallery-image"
-                />
-                <div className="gallery-overlay">
-                  <h3>Campus Congo-Brazzaville</h3>
-                  <p>100 hectáreas de formación integral</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal delay={200}>
-              <div className="gallery-item">
-                <img
-                  src={campusImage2}
-                  alt="Campus Madrid"
-                  className="gallery-image"
-                />
-                <div className="gallery-overlay">
-                  <h3>Campus Madrid</h3>
-                  <p>16 hectáreas de innovación educativa</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal delay={300}>
-              <div className="gallery-item">
-                <img
-                  src={laboratorioImage}
-                  alt="Laboratorios especializados"
-                  className="gallery-image"
-                />
-                <div className="gallery-overlay">
-                  <h3>Laboratorios</h3>
-                  <p>Análisis de suelos y alimentos</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal delay={400}>
-              <div className="gallery-item">
-                <img
-                  src={agriculturaImage}
-                  alt="Programas de agricultura"
-                  className="gallery-image"
-                />
-                <div className="gallery-overlay">
-                  <h3>Agricultura Sostenible</h3>
-                  <p>Técnicas modernas y tradicionales</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal delay={500}>
-              <div className="gallery-item">
-                <img
-                  src={construccionImage}
-                  alt="Construcción e ingeniería"
-                  className="gallery-image"
-                />
-                <div className="gallery-overlay">
-                  <h3>Construcción</h3>
-                  <p>Ingeniería civil sostenible</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal delay={600}>
-              <div className="gallery-item">
-                <img
-                  src={ganaderiaImage}
-                  alt="Ganadería moderna"
-                  className="gallery-image"
-                />
-                <div className="gallery-overlay">
-                  <h3>Ganadería</h3>
-                  <p>Desarrollo pecuario integral</p>
-                </div>
-              </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-
       {/* About Section */}
       <section id="about" className="about">
         <div className="container">
@@ -423,7 +228,7 @@ function App() {
                 <div className="about-features">
                   <div className="about-feature">
                     <span className="check-icon">✓</span>
-                    Formación práctica en 100 hectareas de campus
+                    Formación práctica en 100 ha de campus
                   </div>
                   <div className="about-feature">
                     <span className="check-icon">✓</span>
@@ -442,15 +247,8 @@ function App() {
               <ScrollReveal delay={200}>
                 <div className="about-image">
                   <img
-                    src={facilityImage2}
+                    src="/src/assets/image005.png"
                     alt="Campus Eyenga - agricultura y construcción sostenible"
-                    style={{
-                      width: "100%",
-                      height: "400px",
-                      objectFit: "cover",
-                      borderRadius: "15px",
-                      boxShadow: "0 15px 35px -5px rgba(22, 160, 133, 0.3)",
-                    }}
                   />
                 </div>
               </ScrollReveal>
@@ -471,11 +269,11 @@ function App() {
             <div className="cta-stats">
               <div className="cta-stat">
                 <strong>80M USD</strong>
-                <span>&nbsp;Inversión total proyectada en 4-5 años</span>
+                <span>Inversión total proyectada</span>
               </div>
               <div className="cta-stat">
                 <strong>4-5 años</strong>
-                <span>&nbsp;Período de amortización</span>
+                <span>Período de amortización</span>
               </div>
             </div>
             <button
@@ -494,17 +292,7 @@ function App() {
           <div className="footer-content">
             <div className="footer-section">
               <div className="footer-logo">
-                <img
-                  src={logoIcon}
-                  alt="Eyenga Logo"
-                  className="logo-icon"
-                  style={{
-                    width: "28px",
-                    height: "28px",
-                    borderRadius: "50%",
-                    objectFit: "cover",
-                  }}
-                />
+                <span className="logo-icon">🌾</span>
                 <span className="logo-text">Eyenga</span>
               </div>
               <p>
@@ -570,29 +358,6 @@ function App() {
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
       />
-
-      {/* Scroll Arrows */}
-      {/* Scroll Up Arrow */}
-      {showUpArrow && (
-        <button
-          className="scroll-arrow scroll-arrow-up"
-          onClick={handleScrollUpClick}
-          aria-label="Scroll to top"
-        >
-          <span className="arrow-icon">↑</span>
-        </button>
-      )}
-
-      {/* Scroll Down Arrow */}
-      {showDownArrow && (
-        <button
-          className="scroll-arrow scroll-arrow-down"
-          onClick={handleScrollDownClick}
-          aria-label="Scroll down"
-        >
-          <span className="arrow-icon">↓</span>
-        </button>
-      )}
     </div>
   );
 }
