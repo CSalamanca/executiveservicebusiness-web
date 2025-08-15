@@ -1,0 +1,29 @@
+{
+  "sites": {
+    "corporativa": {
+      "local": {
+        "domain": "corporativa.local",
+        "port": 3000,
+        "apiUrl": "http://corporativa.local:3001/api"
+      },
+      "production": {
+        "domain": "TU_DOMINIO_CORPORATIVO.com",
+        "port": 443,
+        "apiUrl": "https://api.TU_DOMINIO_CORPORATIVO.com"
+      }
+    },
+    "eyenga": {
+      "local": {
+        "domain": "eyenga.local", 
+        "port": 3001,
+        "apiUrl": "http://eyenga.local:3002/api"
+      },
+      "production": {
+        "domain": "TU_DOMINIO_EYENGA.com",
+        "port": 443,
+        "apiUrl": "https://api.TU_DOMINIO_EYENGA.com"
+      }
+    }
+  },
+  "environment": "local"
+}

@@ -1,0 +1,65 @@
+{
+  "name": "React Multi-Site Development",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bullseye",
+  
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  
+  // Configure tool-specific properties
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-eslint",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense",
+        "ms-vscode.vscode-json",
+        "GitHub.copilot",
+        "ms-vscode.live-server"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "typescript.preferences.includePackageJsonAutoImports": "auto"
+      }
+    }
+  },
+  
+  // Use 'forwardPorts' to make a list of ports inside the container available locally
+  "forwardPorts": [3000, 3001, 8080, 8081],
+  
+  // Configure port attributes
+  "portsAttributes": {
+    "3000": {
+      "label": "Corporativa App",
+      "onAutoForward": "notify"
+    },
+    "3001": {
+      "label": "Eyenga App", 
+      "onAutoForward": "notify"
+    }
+  },
+  
+  // Use 'postCreateCommand' to run commands after the container is created
+  "postCreateCommand": "npm install -g create-react-app yarn && yarn --version",
+  
+  // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root
+  "remoteUser": "node",
+  
+  // Set environment variables
+  "containerEnv": {
+    "NODE_ENV": "development"
+  },
+  
+  // Mount the project directory
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "workspaceFolder": "/workspace"
+}

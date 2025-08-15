@@ -1,44 +1,28 @@
 {
-  "name": "eyenga",
-  "version": "0.1.0",
+  "name": "react-multi-site-workspace",
+  "version": "1.0.0",
+  "description": "Workspace para desarrollo de múltiples sitios React",
   "private": true,
-  "dependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.7.0",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.126",
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
-  },
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "start": "PORT=3001 react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev:corporativa": "cd apps/corporativa && npm start",
+    "dev:eyenga": "cd apps/eyenga && npm start", 
+    "dev:all": "concurrently \"npm run dev:corporativa\" \"npm run dev:eyenga\"",
+    "build:corporativa": "cd apps/corporativa && npm run build",
+    "build:eyenga": "cd apps/eyenga && npm run build",
+    "build:all": "npm run build:corporativa && npm run build:eyenga",
+    "install:corporativa": "cd apps/corporativa && npm install",
+    "install:eyenga": "cd apps/eyenga && npm install",
+    "install:all": "npm run install:corporativa && npm run install:eyenga",
+    "create:corporativa": "cd apps && npx create-react-app corporativa --template typescript",
+    "create:eyenga": "cd apps && npx create-react-app eyenga --template typescript",
+    "setup": "npm run create:corporativa && npm run create:eyenga && npm run install:all"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+  "author": "Rafa",
+  "license": "MIT"
 }

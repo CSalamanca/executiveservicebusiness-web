@@ -1,267 +1,156 @@
-# 🌾 Aplicación Eyenga - Website Educativo
+# Eyenga - Educational Website Project
 
-> Sitio web oficial del proyecto educativo Eyenga, desarrollado con React 18.x y TypeScript
+> A modern React-based educational website focused on sustainable agriculture, livestock, and construction practices.
 
-## 📋 Información del Proyecto
+## 🌱 Project Overview
 
-| Propiedad | Valor |
-|-----------|-------|
-| **Nombre** | Eyenga - Proyecto Educativo |
-| **Puerto** | 3001 |
-| **Dominio Local** | eyenga.local |
-| **Estado** | ✅ Completado y Funcional |
-| **Tecnologías** | React 18.x, TypeScript, CSS3 |
-| **Última actualización** | 15 de Agosto, 2025 |
+Eyenga is an interactive educational platform that showcases modern digital solutions across multiple sectors including sustainable agriculture, responsible livestock management, and green construction practices. Built with React 18 and TypeScript, the platform emphasizes clean design, accessibility, and mobile-first responsiveness.
 
-## 🎯 Características Implementadas
+## 🎯 Core Features
 
-### ✅ Funcionalidades Completadas
+- **Multi-sector Educational Content**: Agriculture, livestock, and construction modules
+- **Interactive Design**: Engaging user interface with smooth animations
+- **Responsive Layout**: Mobile-first design optimized for all devices
+- **Modern Architecture**: React 18 with TypeScript for type safety
+- **Performance Optimized**: Fast loading and efficient resource management
 
-- **🎨 Diseño Moderno**: Interface colorida con gradientes CSS y animaciones
-- **📱 Responsive Design**: Adaptado para móvil, tablet y desktop
-- **🖼️ Galería Visual**: Imágenes auténticas del proyecto Eyenga
-- **🔄 Navegación Inteligente**: Flechas de scroll con lógica adaptativa
-- **📧 Modal de Contacto**: Sistema de contacto funcional
-- **🎭 Animaciones**: Scroll reveal y efectos visuales
-- **📊 Métricas del Proyecto**: Estadísticas reales integradas
-- **🌐 Contenido Auténtico**: Información real del proyecto educativo
+## 🏗️ Project Structure
 
-### 🏗️ Estructura de Componentes
-
-```typescript
-src/
-├── components/
-│   ├── ContactModal.tsx      # Modal de contacto responsive
-│   └── ScrollReveal.tsx      # Animaciones de aparición
-├── assets/                   # Imágenes del proyecto
-│   ├── eyenga-laboratorio.png
-│   ├── eyenga-agricultura_sostenible.png
-│   ├── eyenga-construccion_sostenible.png
-│   ├── eyenga-ganaderia_sostenible.png
-│   └── image*.{png,jpg}     # Imágenes adicionales
-├── App.tsx                  # Componente principal
-├── App.css                  # Estilos principales
-└── index.tsx               # Punto de entrada
+```
+apps/
+├── eyenga/          # Main educational website application
+│   ├── src/         # Source code
+│   ├── public/      # Static assets
+│   └── package.json # Project dependencies
+├── corporativa/     # Corporate site (not developed)
+└── ...
 ```
 
-## 🚀 Comandos de Desarrollo
+## 🚀 Getting Started
 
-### Desde el Workspace Raíz
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+- Git
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/executiveservicebusiness/executiveservicebusiness-web.git
+   cd executiveservicebusiness-web
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Start development server**
+
+   ```bash
+   npm run start:eyenga
+   ```
+
+4. **Access the application**
+   Open http://localhost:3000 in your browser
+
+### Quick Commands
+
 ```bash
-# Iniciar aplicación Eyenga
-npm run dev:eyenga
+# Development
+npm run start:eyenga       # Start Eyenga development server
+npm run build:eyenga       # Build Eyenga for production
+npm run test:eyenga        # Run Eyenga tests
 
-# Build para producción
-npm run build:eyenga
-
-# Ejecutar tests
-npm run test:eyenga
+# Workspace management
+npm run setup              # Setup development environment
+npm run clean              # Clean all build artifacts
 ```
 
-### Dentro del Directorio de la App
-```bash
-cd apps/eyenga
+## 🛠️ Technology Stack
 
-# Desarrollo
-npm start                    # Puerto 3001
+- **Frontend**: React 18, TypeScript
+- **Styling**: CSS3, Responsive Design
+- **Build Tool**: Create React App
+- **Development**: ESLint, DevContainer support
+- **Version Control**: Git with GitHub
 
-# Producción
-npm run build               # Build optimizado
-npm run test                # Tests unitarios
-npm run test -- --watch    # Tests en modo watch
-npm run test -- --coverage # Tests con coverage
-```
+## 📱 Features & Modules
 
-## 📱 Secciones del Sitio Web
+### Educational Sections
 
-### 1. 🏠 Hero Section
-- **Contenido**: Presentación principal del proyecto Eyenga
-- **Características**: 
-  - Logo personalizado (image010.png)
-  - Descripción del proyecto educativo
-  - Botón "Descubre Más" para abrir modal
-  - Card flotante con imagen del campus
+- **Sustainable Agriculture**: Modern farming techniques and practices
+- **Livestock Management**: Responsible animal husbandry
+- **Green Construction**: Eco-friendly building methods
 
-### 2. 📊 Estadísticas
-- **2,600 estudiantes** proyectados en 5 años
-- **90% tasa de inserción laboral** garantizada
-- **116 hectáreas** de superficie total de campus
-- **17% crecimiento anual** proyectado
+### Technical Features
 
-### 3. 🎓 Programas de Formación
-- **🌾 Formación Técnica Integral**: Agricultura, ganadería, construcción
-- **🏫 Campus Multinacionales**: Congo-Brazzaville (100 ha) + Madrid (16 ha)
-- **👩‍🌾 Inclusión Social**: Programas para mujeres vulnerables
-- **🔬 Laboratorio Multifuncional**: Análisis de suelos, alimentos y sangre
-- **🌱 Sostenibilidad Ambiental**: Energías renovables y construcción sostenible
-- **🤝 Inserción Laboral**: Tasa superior al 90%
+- **Responsive Design**: Optimized for mobile, tablet, and desktop
+- **Interactive Elements**: Engaging user experience components
+- **Performance**: Fast loading with optimized assets
+- **Accessibility**: WCAG compliant design patterns
 
-### 4. 🖼️ Galería de Campus
-- **Campus Congo-Brazzaville**: 100 hectáreas de formación integral
-- **Campus Madrid**: 16 hectáreas de innovación educativa
-- **Laboratorios**: Análisis de suelos y alimentos (eyenga-laboratorio.png)
-- **Agricultura Sostenible**: Técnicas modernas (eyenga-agricultura_sostenible.png)
-- **Construcción**: Ingeniería civil sostenible (eyenga-construccion_sostenible.png)
-- **Ganadería**: Desarrollo pecuario integral (eyenga-ganaderia_sostenible.png)
+## 🌍 Domain Configuration
 
-### 5. ℹ️ Sobre Eyenga
-- **Visión**: Institución líder en formación técnica rural y urbana
-- **Misión**: Formación especializada con inserción laboral inmediata
-- **Características**:
-  - 100 hectáreas de campus para formación práctica
-  - Alineación con Objetivos de Desarrollo Sostenible
-  - Programa de becas e inclusión social
-  - Laboratorio de análisis certificado
+The project supports multiple domain configurations:
 
-### 6. 💰 Call to Action
-- **Inversión total**: 80M USD proyectados en 4-5 años
-- **Período de amortización**: 4-5 años
-- **Botón de contacto** para más información
+- **Primary**: eyenga.com
+- **Development**: localhost:3000
+- **Staging**: [configured as needed]
 
-### 7. 📞 Footer
-- **Información de contacto**: info@eyenga-project.org
-- **Sedes**: Congo-Brazzaville y Madrid
-- **Equipo directivo**:
-  - Dr. Rafael Rubio Díaz (CEO Executive Service Business - España)
-  - Dr. Roland Parfait Goma (Coordinador Congo-Brazzaville)
+## 📋 Development Workflow
 
-## 🎨 Características Técnicas
+1. **Feature Development**
 
-### CSS y Diseño
-- **Variables CSS**: Colores y gradientes personalizados
-- **Gradientes**: Efectos visuales coloridos en toda la aplicación
-- **Animaciones**: Transiciones suaves y efectos hover
-- **Responsive**: Breakpoints para móvil (768px) y tablet (1024px)
+   ```bash
+   git checkout -b feature/new-feature
+   npm run start:eyenga
+   # Develop and test changes
+   ```
 
-### JavaScript/TypeScript
-- **React Hooks**: useState para estado, useEffect para scroll
-- **Scroll Inteligente**: Flechas aparecen/desaparecen según posición
-- **Navegación Suave**: Scroll animado entre secciones
-- **Modal System**: ContactModal reutilizable
+2. **Code Quality**
 
-### Performance
-- **Lazy Loading**: Imágenes optimizadas
-- **Asset Optimization**: Compresión y formateo adecuado
-- **Tree Shaking**: Código no usado eliminado
-- **Build Optimizado**: Minificación para producción
+   ```bash
+   npm run test:eyenga
+   npm run lint
+   ```
 
-## 🔧 Configuración Avanzada
+3. **Deployment**
+   ```bash
+   npm run build:eyenga
+   # Deploy build artifacts
+   ```
 
-### Variables de Entorno
-```bash
-# .env.local (opcional)
-REACT_APP_CONTACT_EMAIL=info@eyenga-project.org
-REACT_APP_CAMPUS_CONGO_SIZE=100
-REACT_APP_CAMPUS_MADRID_SIZE=16
-```
+## 📖 Documentation
 
-### Puertos y URLs
-- **Desarrollo**: http://localhost:3001
-- **Dominio Local**: http://eyenga.local:3001 (con hosts configurados)
-- **Build Local**: `npx serve -s build -l 3001`
+- **[Technical Documentation](TECHNICAL_DOCS.md)**: Architecture and implementation details
+- **[Commands Reference](COMMANDS.md)**: Available npm scripts and usage
+- **[Deployment Guide](DEPLOYMENT.md)**: Production deployment instructions
+- **[Design Guide](docs/DESIGN_GUIDE.md)**: UI/UX design principles
+- **[Changelog](CHANGELOG.md)**: Version history and updates
 
-### Scripts Personalizados
-```json
-{
-  "scripts": {
-    "start": "BROWSER=none PORT=3001 react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  }
-}
-```
+## 🤝 Contributing
 
-## 🐛 Resolución de Problemas
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### Problema: Puerto en uso
-```bash
-# Liberar puerto 3001
-sudo lsof -ti:3001 | xargs kill -9
-npm start
-```
+## 📄 License
 
-### Problema: Imágenes no cargan
-```bash
-# Verificar que las imágenes existen
-ls -la src/assets/
-# Verificar importaciones en App.tsx
-grep "import.*assets" src/App.tsx
-```
+This project is part of the Executive Service Business educational initiative.
 
-### Problema: Estilos no se aplican
-```bash
-# Verificar compilación CSS
-npm start
-# Verificar en DevTools del navegador
-```
+## 🔗 Links
 
-## 📈 Métricas de Performance
-
-### Objetivos Logrados
-- ✅ **First Contentful Paint**: ~1.2s
-- ✅ **Largest Contentful Paint**: ~1.8s
-- ✅ **First Input Delay**: <100ms
-- ✅ **Cumulative Layout Shift**: <0.1
-
-### Herramientas de Análisis
-```bash
-# Lighthouse CLI
-npx lighthouse http://localhost:3001 --output html
-
-# Bundle analyzer
-npm install -g webpack-bundle-analyzer
-npm run build
-npx webpack-bundle-analyzer build/static/js/*.js
-```
-
-## 🚀 Deployment
-
-### Build de Producción
-```bash
-npm run build
-# Genera carpeta build/ lista para deploy
-```
-
-### Servir Localmente
-```bash
-npx serve -s build -l 3001
-# Acceder en http://localhost:3001
-```
-
-### Preparar para Hosting
-```bash
-# Comprimir build para subir
-cd build && tar -czf ../eyenga-build.tar.gz .
-```
+- **Live Site**: [eyenga.com](https://eyenga.com)
+- **Repository**: [GitHub](https://github.com/executiveservicebusiness/executiveservicebusiness-web)
+- **Issues**: [GitHub Issues](https://github.com/executiveservicebusiness/executiveservicebusiness-web/issues)
 
 ---
 
-## 📞 Contacto del Proyecto
-
-**Proyecto Educativo Eyenga**
-- 🌍 **Congo-Brazzaville**: 100 hectáreas
-- 🇪🇸 **Madrid, España**: 16 hectáreas  
-- 📧 **Email**: info@eyenga-project.org
-- 🎯 **Misión**: Formación técnica integral en agricultura, ganadería y construcción
-
-**Desarrollo Web**
-- 💻 **Tecnología**: React 18.x + TypeScript
-- 📅 **Completado**: 15 de Agosto, 2025
-- ✨ **Estado**: Totalmente funcional y optimizado
-
----
-
-### 🌟 Resumen del Estado
-
-| Componente | Estado | Notas |
-|------------|--------|-------|
-| **Interface** | ✅ Completado | Diseño moderno y colorido |
-| **Contenido** | ✅ Completado | Información auténtica del proyecto |
-| **Navegación** | ✅ Completado | Flechas inteligentes y menú responsive |
-| **Galería** | ✅ Completado | Imágenes específicas del proyecto |
-| **Modal** | ✅ Completado | Sistema de contacto funcional |
-| **Responsive** | ✅ Completado | Móvil, tablet y desktop |
-| **Performance** | ✅ Optimizado | Métricas excelentes |
-
-**🎉 ¡La aplicación Eyenga está completamente desarrollada y lista para mostrar la excelencia del proyecto educativo!**
+**Built with ❤️ for sustainable education and digital innovation**
